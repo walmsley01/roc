@@ -1,4 +1,4 @@
-const CACHE = 'roc-v2';
+const CACHE = 'roc-v3';
 const CDN_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',

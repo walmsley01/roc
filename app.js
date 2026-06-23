@@ -76,7 +76,7 @@ const WEEKS = [
     [CAM, LOWER, CPM, MOB],
     [HILL('10 WU + 8×(60s hard / walk down) + 5 CD'), CAM, CPM, MOB],
     [ST(35,' +5 kg pack'), UPPER, MOB],
-    [R('am','6 km continuous',6), CAM, CPM, MOB],
+    [R('am','7 km continuous',7), CAM, CPM, MOB],
     [REST, MOB],
     [RIDE('am','75 km',75)],
     [R('am','9 km continuous',9)],
@@ -85,7 +85,7 @@ const WEEKS = [
     [CAM, LOWER, CPM, MOB],
     [HILL('10 WU + 8×(90s hard / jog down last 2) + 5 CD'), CAM, CPM, MOB],
     [ST(40,' +5 kg pack'), UPPER, MOB],
-    [R('am','5 km continuous',5), CAM, CPM, MOB],
+    [R('am','7 km continuous',7), CAM, CPM, MOB],
     [REST, MOB],
     [RIDE('am','70 km',70)],
     [R('am','11 km continuous',11)],
@@ -101,7 +101,7 @@ const WEEKS = [
   ]},
   { n:8, start:'2026-08-10', phase:'Deload + OW', days:[
     [CAM, LOWER, CPM, MOB],
-    [R('am','6 km continuous',6), CAM, CPM, MOB],
+    [R('am','8 km continuous',8), CAM, CPM, MOB],
     [ST(35,' +5 kg pack'), UPPER, MOB],
     [CAM, CPM, SW('#4 · OW 1.5 km (wetsuit)',1.5,true), MOB],
     [REST, MOB],
@@ -111,7 +111,7 @@ const WEEKS = [
   { n:9, start:'2026-08-17', phase:'Peak / Lakes', days:[
     [R('am','5 km continuous',5), CAM, CPM, MOB],
     [SW('#5 · OW 2.0 km (wetsuit)',2.0,true), MOB],
-    [ST(40,' +5 kg pack'), MOB],
+    [ST(40,' +5 kg pack'), { slot:'am', sport:'bike', title:'Stairs→bike brick', detail:'25 min easy spin immediately off stairs — simulate mountain-to-bike legs', km:8, hr:REC }, MOB],
     [REST, MOB],
     [RIDE('am','30 min easy / travel',10)],
     [{ slot:'am', sport:'run', title:'Mountain day', detail:'16–18 km · ~4–5 hr · hike + run + descents (Scafell)', km:17, hr:Z }],
@@ -123,7 +123,7 @@ const WEEKS = [
     [ST(25), MOB],
     [CAM, CPM, MOB],
     [REST, MOB],
-    [RIDE('am','65 km',65)],
+    [RIDE('am','50 km',50)],
     [R('am','12 km continuous',12)],
   ]},
   { n:11, start:'2026-08-31', phase:'Race week', days:[
@@ -139,7 +139,7 @@ const WEEKS = [
 
 /* ---------- Section 2: storage ---------- */
 const KEYS = { plan:'roc_plan', hip:'roc_hip', settings:'roc_settings', garmin:'roc_garmin' };
-const SEED_VERSION = 4;
+const SEED_VERSION = 5;
 const store = {
   get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
   set(k,v){ localStorage.setItem(k, JSON.stringify(v)); },
@@ -244,6 +244,11 @@ function sessionRow(s, opts={}){
     ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
     : s.status==='skipped' ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>' : '';
   const detail = s.actual ? `${s.detail} · <span style="color:var(--accent);font-weight:600;">done ${s.actual.label}</span>` : s.detail;
+  const hint = !s.actual ? paceHint(s) : null;
+  const pills = [
+    s.hr  ? `<span class="pill-hr">${s.hr}</span>` : '',
+    hint  ? `<span class="pill-hint">${hint}</span>` : '',
+  ].filter(Boolean).join('');
   const showTick = s.sport !== 'rest';
   return `
     <div class="sess ${s.status==='done'?'done':''}" data-action="edit-session" data-id="${s.id}">
@@ -251,6 +256,7 @@ function sessionRow(s, opts={}){
       <div class="sess-body">
         <div class="sess-title">${s.title}</div>
         ${detail ? `<div class="sess-detail">${detail}</div>`:''}
+        ${pills  ? `<div class="sess-pills">${pills}</div>` : ''}
       </div>
       ${opts.slot===false ? '' : `<span class="sess-slot">${s.slot}</span>`}
       ${showTick ? `<div class="${tickCls}" data-action="tick" data-id="${s.id}">${tickIcon}</div>` : ''}
@@ -272,31 +278,49 @@ function renderDashboard(){
     const keys = state.plan.filter(s=>wkDates.includes(s.date) && isKey(s));
     const done = keys.filter(s=>s.status==='done').length;
     const pct = keys.length ? Math.round(done/keys.length*100) : 0;
-    progHTML = `
-      <div class="card card-pad">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;">
-          <div style="font-weight:700;">Week ${wk.n} · ${wk.phase}</div>
-          <div style="font-size:13px;color:var(--text-2);">${done}/${keys.length} key sessions</div>
+    const keyListHTML = keys.map(s=>{
+      const dow = parseYMD(s.date).toLocaleDateString('en-GB',{weekday:'short'});
+      const dot = s.status==='done' ? `<span style="color:var(--accent);font-weight:700;">✓</span>`
+                : s.status==='skipped' ? `<span style="color:var(--amber);font-weight:700;">–</span>`
+                : `<span style="color:var(--text-3);">·</span>`;
+      return `<div class="key-sess-row" data-action="edit-session" data-id="${s.id}">
+        <span class="key-dow">${dow}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;">${s.title}</div>
+          ${s.detail?`<div style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.detail}</div>`:''}
+          ${s.hr?`<div style="font-size:11px;color:var(--text-3);margin-top:1px;">${s.hr}</div>`:''}
         </div>
-        <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+        ${dot}
+      </div>`;
+    }).join('');
+    progHTML = `
+      <div class="card" style="margin:0 16px 12px;">
+        <div class="card-pad" style="cursor:pointer;" data-action="toggle-week-sessions">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div style="font-weight:700;">Week ${wk.n} · ${wk.phase}</div>
+            <div style="font-size:13px;color:var(--text-2);">${done}/${keys.length} sessions <span id="week-tog" style="font-size:10px;opacity:0.6;">▾</span></div>
+          </div>
+          <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div id="week-key-list" style="display:none;border-top:1px solid var(--border);">${keyListHTML}</div>
       </div>`;
   }
 
   // readiness tiles
   const today_w = g?.wellness?.[TODAY];
-  const tile = (label,val,sub,dot) => `
-    <div class="metric">
+  const tile = (label,val,sub,dot,mkey) => `
+    <div class="metric${mkey?' metric-tap':''}" ${mkey?`data-action="metric-trend" data-metric="${mkey}"`:''}>
       <div class="metric-label">${dot?`<span class="metric-dot ${dot}"></span>`:''}${label}</div>
       <div class="metric-val ${val==null?'muted':''}">${val==null?'—':val}</div>
-      <div class="metric-sub">${sub}</div>
+      <div class="metric-sub">${sub}${mkey?` <span style="font-size:10px;color:var(--text-3);">↗</span>`:''}</div>
     </div>`;
   const readiness = `
     <div class="section-label">Readiness ${today_w?'':'· sync Garmin to populate'}</div>
     <div class="dash-grid">
-      ${tile('Sleep', today_w?.sleepScore ?? null, today_w?`${today_w.sleepHours??'–'} h`:'last night')}
-      ${tile('HRV', today_w?.hrv ?? null, 'ms overnight', today_w?.hrvStatus==='balanced'?'dot-good':today_w?.hrvStatus?'dot-warn':'')}
-      ${tile('Resting HR', today_w?.restingHr ?? null, 'bpm')}
-      ${tile('Body Battery', today_w?.bodyBattery ?? null, 'now')}
+      ${tile('Sleep', today_w?.sleepScore??null, today_w?`${today_w.sleepHours??'–'} h`:'last night', '', 'sleepScore')}
+      ${tile('HRV', today_w?.hrv??null, 'ms overnight', today_w?.hrvStatus==='balanced'?'dot-good':today_w?.hrvStatus?'dot-warn':'', 'hrv')}
+      ${tile('Resting HR', today_w?.restingHr??null, 'bpm', '', 'restingHr')}
+      ${tile('Body Battery', today_w?.bodyBattery??null, 'now', '', 'bodyBattery')}
     </div>`;
 
   // training load
@@ -368,7 +392,7 @@ function renderCalendar(){
     const isToday = ds===TODAY;
     const wkTag = weekOf(ds);
     daysHTML += `
-      <div class="day-block">
+      <div class="day-block" data-date="${ds}">
         <div class="day-block-head ${isToday?'today':''}">
           <span class="dow">${d.toLocaleDateString('en-GB',{weekday:'short'})}</span>
           <span class="dom">${d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>
@@ -510,6 +534,45 @@ function openSheet(title, html, onOpen){
 }
 function closeSheet(){ document.getElementById('sheet-overlay').classList.remove('open'); }
 
+let _metricChart = null;
+function openMetricTrend(key){
+  if(_metricChart){ try{_metricChart.destroy();}catch{} _metricChart=null; }
+  const META = {
+    sleepScore:  {title:'Sleep score',      color:'#6366f1', unit:''},
+    hrv:         {title:'HRV overnight',    color:'#16a34a', unit:' ms'},
+    restingHr:   {title:'Resting HR',       color:'#ef4444', unit:' bpm'},
+    bodyBattery: {title:'Body Battery',     color:'#f59e0b', unit:''},
+  };
+  const m = META[key]; if(!m) return;
+  const g = getGarmin();
+  const days = Object.keys(g?.wellness||{}).sort().slice(-30);
+  const pts = days.map(d=>({d, v:g.wellness[d]?.[key]})).filter(p=>p.v!=null);
+  openSheet(m.title, `
+    <div style="position:relative;height:200px;">
+      <canvas id="mc" role="img" aria-label="${m.title} trend chart"></canvas>
+    </div>
+    ${pts.length
+      ? `<div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12px;color:var(--text-2);">
+           <span>Last ${pts.length} readings</span>
+           <span>Latest: <b style="color:var(--text);">${pts.at(-1).v}${m.unit}</b></span>
+         </div>`
+      : `<p style="text-align:center;color:var(--text-3);font-size:13px;margin-top:20px;">No data yet — keep syncing Garmin nightly.</p>`}
+  `, ()=>{
+    if(!pts.length) return;
+    _metricChart = new Chart(document.getElementById('mc'),{
+      type:'line',
+      data:{ labels:pts.map(p=>p.d.slice(5)),
+             datasets:[{data:pts.map(p=>p.v), borderColor:m.color,
+                        backgroundColor:m.color+'20', fill:true, tension:0.35,
+                        borderWidth:2, pointRadius:3, pointBackgroundColor:m.color}] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{ x:{grid:{display:false},ticks:{color:'#9aa8a0',font:{size:11},maxTicksLimit:10}},
+                 y:{grid:{color:'#eef2ef'},ticks:{color:'#9aa8a0',font:{size:11}}} } }
+    });
+  });
+}
+
 function openEditSheet(id){
   const s = state.plan.find(x=>x.id===id); if(!s) return;
   const sportOpts = Object.keys(SPORTS).map(k=>`<option value="${k}" ${s.sport===k?'selected':''}>${SPORTS[k].label}</option>`).join('');
@@ -577,6 +640,20 @@ function paceLabel(secPerKm){
   const m = Math.floor(secPerKm/60), s = Math.round(secPerKm%60);
   return `${m}:${String(s).padStart(2,'0')}`;
 }
+function paceHint(s){
+  if (s.sport==='run' && s.hr && s.hr.includes('145') && s.title!=='Brick run'){
+    const g = getGarmin();
+    const mafPts = (g?.maf||[]).filter(p=>p.pace).slice(-5);
+    if (mafPts.length>=2){
+      const avg = mafPts.reduce((a,p)=>a+p.pace,0)/mafPts.length;
+      return `~${paceLabel(Math.round(avg))} /km (MAF)`;
+    }
+    return '~7:00–7:30 /km';
+  }
+  if (s.sport==='bike' && s.title==='Ride' && s.hr && s.hr.includes('145')) return 'aim 22–28 km/h';
+  if (s.sport==='stairs') return 'no hands on rails';
+  return null;
+}
 function destroyCharts(){ (state.charts||[]).forEach(c=>{ try{c.destroy();}catch{} }); state.charts=[]; }
 function noData(id){ const c=document.getElementById('c-'+id); if(c)c.style.display='none'; const n=document.getElementById('n-'+id); if(n)n.textContent='Not enough data yet — keep syncing.'; }
 function axes(extraY){ return { x:{grid:{display:false},ticks:{color:'#9aa8a0',font:{size:11}}}, y: extraY || {grid:{color:'#eef2ef'},ticks:{color:'#9aa8a0',font:{size:11}}} }; }
@@ -627,6 +704,49 @@ function computeAcwr(g){
 function acwrDot(v){ if(v==null) return ''; if(v>1.5) return 'dot-bad'; if(v>=0.8&&v<=1.3) return 'dot-good'; return 'dot-warn'; }
 function acwrText(v){ if(v==null) return 'sweet spot 0.8–1.3'; if(v>1.5) return 'high — ease off'; if(v<0.8) return 'building'; if(v<=1.3) return 'sweet spot'; return 'elevated'; }
 
+/* ---------- Section 15a: calendar drag-and-drop (long press) ---------- */
+let _drag = {}, _dragTimer = null;
+
+function cancelDrag(){
+  clearTimeout(_dragTimer); _dragTimer = null;
+  if(_drag.ghost) _drag.ghost.remove();
+  if(_drag.el) _drag.el.style.opacity = '';
+  document.querySelectorAll('.day-block').forEach(b=>b.classList.remove('drag-over'));
+  _drag = {};
+}
+
+function handleTouchMove(e){
+  if(_drag.id && !_drag.active){
+    const t = e.touches[0];
+    if(Math.abs(t.clientX-_drag.sx)>8 || Math.abs(t.clientY-_drag.sy)>8) cancelDrag();
+    return;
+  }
+  if(!_drag.active) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  if(_drag.ghost){ _drag.ghost.style.left=(t.clientX-_drag.ox)+'px'; _drag.ghost.style.top=(t.clientY-_drag.oy)+'px'; }
+  document.querySelectorAll('.day-block').forEach(b=>b.classList.remove('drag-over'));
+  const hit = document.elementFromPoint(t.clientX,t.clientY)?.closest('.day-block[data-date]');
+  if(hit) hit.classList.add('drag-over');
+}
+
+function handleTouchEnd(e){
+  if(!_drag.active){ cancelDrag(); return; }
+  const t = (e.changedTouches||[])[0];
+  if(t){
+    const hit = document.elementFromPoint(t.clientX,t.clientY)?.closest('.day-block[data-date]');
+    if(hit){
+      const newDate = hit.dataset.date;
+      const sess = state.plan.find(s=>s.id===_drag.id);
+      if(sess && sess.date!==newDate){
+        updateSession(_drag.id,{date:newDate});
+        showToast('Moved to '+parseYMD(newDate).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}));
+      }
+    }
+  }
+  cancelDrag();
+}
+
 /* ---------- Section 15: events ---------- */
 function handleClick(e){
   const t = e.target.closest('[data-action]'); if(!t) return;
@@ -639,9 +759,20 @@ function handleClick(e){
   if (a==='cal-prev'){ state.calWeekStart = addDays(state.calWeekStart,-7); renderCalendar(); return; }
   if (a==='cal-next'){ state.calWeekStart = addDays(state.calWeekStart, 7); renderCalendar(); return; }
   if (a==='cal-today'){ state.calWeekStart = mondayOf(TODAY<PLAN_START?parseYMD(PLAN_START):new Date()); renderCalendar(); return; }
+  if (a==='toggle-week-sessions'){
+    const list = document.getElementById('week-key-list');
+    const tog  = document.getElementById('week-tog');
+    if(!list) return;
+    const open = list.style.display==='none';
+    list.style.display = open?'block':'none';
+    if(tog) tog.textContent = open?'▴':'▾';
+    return;
+  }
+  if (a==='metric-trend'){ openMetricTrend(t.dataset.metric); return; }
 }
 function initEvents(){
-  document.getElementById('main-content').addEventListener('click', handleClick);
+  const mc = document.getElementById('main-content');
+  mc.addEventListener('click', handleClick);
   document.getElementById('sheet-overlay').addEventListener('click', e=>{
     if (e.target===document.getElementById('sheet-overlay')) closeSheet();
     else handleClick(e);
@@ -649,6 +780,29 @@ function initEvents(){
   document.getElementById('bottom-nav').addEventListener('click', e=>{
     const b=e.target.closest('[data-nav]'); if(b) navigate(b.dataset.nav);
   });
+  // Calendar long-press drag
+  mc.addEventListener('touchstart', e=>{
+    if(state.view!=='calendar') return;
+    const sess = e.target.closest('.sess[data-id]');
+    if(!sess || e.target.closest('[data-action="tick"]')) return;
+    const touch = e.touches[0];
+    _drag = { id:sess.dataset.id, el:sess, sx:touch.clientX, sy:touch.clientY, active:false };
+    _dragTimer = setTimeout(()=>{
+      if(!_drag.id) return;
+      _drag.active = true;
+      const rect = sess.getBoundingClientRect();
+      _drag.ox = touch.clientX-rect.left; _drag.oy = touch.clientY-rect.top;
+      const g = sess.cloneNode(true);
+      g.style.cssText = `position:fixed;width:${rect.width}px;left:${touch.clientX-_drag.ox}px;top:${touch.clientY-_drag.oy}px;z-index:999;opacity:0.92;pointer-events:none;box-shadow:0 10px 36px rgba(0,0,0,0.22);border-radius:12px;background:var(--surface);`;
+      document.body.appendChild(g);
+      _drag.ghost = g;
+      sess.style.opacity = '0.25';
+      if(navigator.vibrate) navigator.vibrate(40);
+    }, 500);
+  }, {passive:true});
+  document.addEventListener('touchmove', handleTouchMove, {passive:false});
+  document.addEventListener('touchend', handleTouchEnd);
+  document.addEventListener('touchcancel', cancelDrag);
 }
 
 /* ---------- Section 16: init ---------- */
