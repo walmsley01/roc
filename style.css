@@ -328,6 +328,56 @@ html, body {
   outline: 2px solid var(--accent); background: var(--accent-soft); border-radius: var(--r-lg);
 }
 
+/* ── Intensity stripes ── */
+.sess.stripe-z2       { border-left: 3px solid #16a34a; padding-left: 11px; }
+.sess.stripe-hard     { border-left: 3px solid #ef4444; padding-left: 11px; }
+.sess.stripe-strength { border-left: 3px solid #d97706; padding-left: 11px; }
+.sess.stripe-stairs   { border-left: 3px solid #7c3aed; padding-left: 11px; }
+.sess.stripe-swim     { border-left: 3px solid #0891b2; padding-left: 11px; }
+
+/* ── RPE badge ── */
+.rpe-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+.rpe-badge.rpe-easy { background: rgba(22,163,74,0.12); color: #16a34a; }
+.rpe-badge.rpe-good { background: rgba(217,119,6,0.12); color: #d97706; }
+.rpe-badge.rpe-hard { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+/* ── RPE sheet buttons ── */
+.rpe-row { display: flex; gap: 10px; margin-bottom: 18px; }
+.rpe-btn {
+  flex: 1; padding: 16px 8px; border-radius: 12px;
+  border: 1.5px solid var(--border); background: var(--surface-2);
+  font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rpe-btn.rpe-easy { border-color: #16a34a; color: #16a34a; }
+.rpe-btn.rpe-good { border-color: #d97706; color: #d97706; }
+.rpe-btn.rpe-hard { border-color: #ef4444; color: #ef4444; }
+.rpe-btn:active { opacity: 0.65; }
+
+/* ── Calendar heat map ── */
+.heat-wrap { padding: 0 16px 10px; }
+.heat-month-label {
+  font-size: 11px; font-weight: 700; color: var(--text-3);
+  letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px;
+}
+.heat-map { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.heat-dow {
+  font-size: 10px; color: var(--text-3); text-align: center;
+  font-weight: 600; padding-bottom: 3px;
+}
+.heat-day { aspect-ratio: 1; border-radius: 3px; cursor: pointer; }
+.heat-day:empty { background: transparent !important; cursor: default; }
+.heat-day.cur-week { outline: 1px solid var(--text-3); outline-offset: 1px; }
+.heat-day.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+.heat-day:active { opacity: 0.65; }
+
+/* ── MAF legend ── */
+.maf-legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+.maf-legend span { display: flex; align-items: center; gap: 5px; }
+.legend-swatch { display: inline-block; width: 22px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+.legend-swatch.solid-green { background: #16a34a; }
+.legend-swatch.dashed-blue { background: repeating-linear-gradient(to right,#0284c7 0,#0284c7 5px,transparent 5px,transparent 9px); }
+
 .hidden { display: none !important; }
 .chart-wrap { position: relative; height: 220px; margin: 4px 0; }
 .trend-card { margin: 0 16px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); padding: 14px 14px 10px; }

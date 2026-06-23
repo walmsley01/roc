@@ -23,9 +23,6 @@ const CAM   = { slot:'am', sport:'bike',     title:'Commute',      detail:'8 km 
 const CPM   = { slot:'pm', sport:'bike',     title:'Commute',      detail:'8 km easy', km:8 };
 const MOB   = { slot:'pm', sport:'mobility', title:'Hip & mobility', detail:'8 min' };
 const REST  = { slot:'am', sport:'rest',     title:'Rest',         detail:'Full recovery' };
-const LOWER = { slot:'pm', sport:'strength', title:'Lower / Hip',  detail:'40 min · split squat, eccentric step-downs, SL RDL, glute med' };
-const LOWERL= { slot:'pm', sport:'strength', title:'Lower / Hip',  detail:'40 min (light)' };
-const UPPER = { slot:'pm', sport:'strength', title:'Upper',        detail:'45 min push / pull' };
 
 const R     = (slot, detail, km) => ({ slot, sport:'run',  title:'Run',   detail, km, hr:Z });
 const RIDE  = (slot, detail, km) => ({ slot, sport:'bike', title:'Ride',  detail, km, hr:Z });
@@ -37,7 +34,7 @@ const BRICK = (detail, km)       => ({ slot:'am', sport:'run', title:'Brick run'
 // days array index: 0=Mon … 6=Sun
 const WEEKS = [
   { n:1, start:'2026-06-22', phase:'Foundation', days:[
-    [CAM, LOWER, CPM, MOB],
+    [CAM, CPM, MOB],
     [R('am','4 km continuous',4), CAM, CPM, MOB],
     [ST(20), MOB],
     [CAM, CPM, MOB],
@@ -46,16 +43,16 @@ const WEEKS = [
     [R('am','5 km · 6×(4 min jog / 1 min walk)',5)],
   ]},
   { n:2, start:'2026-06-29', phase:'Foundation', days:[
-    [CAM, LOWER, CPM, MOB],
+    [CAM, CPM, MOB],
     [HILL('10 WU + 6×(60s hard / walk down) + 5 CD'), CAM, CPM, MOB],
-    [ST(25), UPPER, MOB],
+    [ST(25), MOB],
     [CAM, CPM, SW('#1 · 0.8 km (8×100)',0.8), MOB],
     [REST, MOB],
     [RIDE('am','60 km',60), BRICK('1.5 km off the bike',1.5)],
     [R('am','6 km · 5×(6 min jog / 1 min walk)',6)],
   ]},
   { n:3, start:'2026-07-06', phase:'Foundation', days:[
-    [CAM, LOWER, CPM, MOB],
+    [CAM, CPM, MOB],
     [HILL('10 WU + 6×(75s hard / walk down) + 5 CD'), CAM, CPM, MOB],
     [ST(30,' · last 10 steady'), MOB],
     [R('am','5 km continuous',5), CAM, CPM, MOB],
@@ -64,7 +61,7 @@ const WEEKS = [
     [R('am','7 km · 3×(12 min jog / 1 min walk)',7)],
   ]},
   { n:4, start:'2026-07-13', phase:'Deload', days:[
-    [CAM, LOWERL, CPM, MOB],
+    [CAM, CPM, MOB],
     [R('am','4 km continuous',4), CAM, CPM, MOB],
     [ST(20), MOB],
     [CAM, CPM, SW('#2 · 1.2 km (200 + 1000 continuous)',1.2), MOB],
@@ -73,36 +70,36 @@ const WEEKS = [
     [R('am','5 km continuous',5)],
   ]},
   { n:5, start:'2026-07-20', phase:'Build', days:[
-    [CAM, LOWER, CPM, MOB],
+    [CAM, CPM, MOB],
     [HILL('10 WU + 8×(60s hard / walk down) + 5 CD'), CAM, CPM, MOB],
-    [ST(35,' +5 kg pack'), UPPER, MOB],
+    [ST(35,' +5 kg pack'), MOB],
     [R('am','7 km continuous',7), CAM, CPM, MOB],
     [REST, MOB],
     [RIDE('am','75 km',75)],
     [R('am','9 km continuous',9)],
   ]},
   { n:6, start:'2026-07-27', phase:'Build', days:[
-    [CAM, LOWER, CPM, MOB],
+    [CAM, CPM, MOB],
     [HILL('10 WU + 8×(90s hard / jog down last 2) + 5 CD'), CAM, CPM, MOB],
-    [ST(40,' +5 kg pack'), UPPER, MOB],
+    [ST(40,' +5 kg pack'), MOB],
     [R('am','7 km continuous',7), CAM, CPM, MOB],
     [REST, MOB],
     [RIDE('am','70 km',70)],
     [R('am','11 km continuous',11)],
   ]},
   { n:7, start:'2026-08-03', phase:'Build', days:[
-    [CAM, LOWER, CPM, MOB],
+    [CAM, CPM, MOB],
     [HILL('10 WU + 10×(90s hard / jog down) + 5 CD'), CAM, CPM, MOB],
-    [ST(45,' +5 kg pack'), UPPER, MOB],
+    [ST(45,' +5 kg pack'), MOB],
     [R('am','5 km continuous',5), CAM, CPM, SW('#3 · 1.5 km continuous',1.5), MOB],
     [REST, MOB],
     [RIDE('am','100 km (go longer if good)',100), BRICK('1.5 km off the bike',1.5)],
     [R('am','8 km continuous (easy)',8)],
   ]},
   { n:8, start:'2026-08-10', phase:'Deload + OW', days:[
-    [CAM, LOWER, CPM, MOB],
+    [CAM, CPM, MOB],
     [R('am','8 km continuous',8), CAM, CPM, MOB],
-    [ST(35,' +5 kg pack'), UPPER, MOB],
+    [ST(35,' +5 kg pack'), MOB],
     [CAM, CPM, SW('#4 · OW 1.5 km (wetsuit)',1.5,true), MOB],
     [REST, MOB],
     [RIDE('am','55 km',55), BRICK('1 km off the bike',1)],
@@ -118,7 +115,7 @@ const WEEKS = [
     [RIDE('am','50–60 km Z2 or bike→mountain brick',55)],
   ]},
   { n:10, start:'2026-08-24', phase:'Taper', days:[
-    [CAM, LOWERL, CPM, MOB],
+    [CAM, CPM, MOB],
     [R('am','6 km + 4×20s strides',6), CAM, CPM, MOB],
     [ST(25), MOB],
     [CAM, CPM, MOB],
@@ -139,7 +136,7 @@ const WEEKS = [
 
 /* ---------- Section 2: storage ---------- */
 const KEYS = { plan:'roc_plan', hip:'roc_hip', settings:'roc_settings', garmin:'roc_garmin' };
-const SEED_VERSION = 5;
+const SEED_VERSION = 6;
 const store = {
   get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
   set(k,v){ localStorage.setItem(k, JSON.stringify(v)); },
@@ -190,14 +187,24 @@ const state = {
 
 /* ---------- Section 4: plan helpers ---------- */
 const isKey = s => s.sport !== 'rest' && s.sport !== 'mobility' && s.title !== 'Commute';
+function stripeClass(s){
+  if (s.hr?.includes('165')) return 'stripe-hard';
+  if (s.hr?.includes('145')) return 'stripe-z2';
+  if (s.sport==='strength') return 'stripe-strength';
+  if (s.sport==='stairs')   return 'stripe-stairs';
+  if (s.sport==='swim')     return 'stripe-swim';
+  return '';
+}
 function sessionsOn(date){
   return state.plan.filter(s => s.date === date).sort((a,b)=> (a.slot===b.slot?0 : a.slot==='am'?-1:1));
 }
 function setStatus(id, status){
   const s = state.plan.find(x=>x.id===id); if(!s) return;
-  s.status = s.status === status ? 'planned' : status;
-  if (s.status !== 'done') s.autoMatched = false;
+  const wasDone = s.status==='done';
+  s.status = s.status===status ? 'planned' : status;
+  if (s.status!=='done') s.autoMatched = false;
   savePlan(state.plan); rerender();
+  if (s.status==='done' && !wasDone && !s.autoMatched) showRpeSheet(id);
 }
 function updateSession(id, changes){
   const s = state.plan.find(x=>x.id===id); if(!s) return;
@@ -249,14 +256,17 @@ function sessionRow(s, opts={}){
     s.hr  ? `<span class="pill-hr">${s.hr}</span>` : '',
     hint  ? `<span class="pill-hint">${hint}</span>` : '',
   ].filter(Boolean).join('');
+  const rpeBadge = s.status==='done' && s.rpe
+    ? `<span class="rpe-badge rpe-${s.rpe}">${s.rpe[0].toUpperCase()}</span>` : '';
+  const sc = stripeClass(s);
   const showTick = s.sport !== 'rest';
   return `
-    <div class="sess ${s.status==='done'?'done':''}" data-action="edit-session" data-id="${s.id}">
+    <div class="sess ${s.status==='done'?'done':''} ${sc}" data-action="edit-session" data-id="${s.id}">
       <div class="sess-icon ${s.sport}">${sportIcon(s.sport)}</div>
       <div class="sess-body">
         <div class="sess-title">${s.title}</div>
         ${detail ? `<div class="sess-detail">${detail}</div>`:''}
-        ${pills  ? `<div class="sess-pills">${pills}</div>` : ''}
+        ${pills||rpeBadge ? `<div class="sess-pills">${pills}${rpeBadge}</div>` : ''}
       </div>
       ${opts.slot===false ? '' : `<span class="sess-slot">${s.slot}</span>`}
       ${showTick ? `<div class="${tickCls}" data-action="tick" data-id="${s.id}">${tickIcon}</div>` : ''}
@@ -408,6 +418,7 @@ function renderCalendar(){
 
   mc.innerHTML = `
     <div class="page-header" style="padding-bottom:6px;"><div class="page-title">Calendar</div></div>
+    ${renderHeatMap()}
     <div class="cal-head">
       <button class="cal-nav-btn" data-action="cal-prev"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div><div class="cal-week-label">${wk?`Week ${wk.n} · ${wk.phase}`:'Off-plan week'}</div><div class="cal-week-sub" style="text-align:center;">${range}</div></div>
@@ -424,6 +435,35 @@ function slotBlock(label, sessions, ds, slot){
       : `<div class="day-empty">—</div>`}`;
 }
 
+function renderHeatMap(){
+  const LOAD_W={run:1.0,bike:0.25,swim:2.0,stairs:0.6,strength:0.4};
+  const HEAT=['#eef2ef','#c0dd97','#97c459','#639922','#27500a'];
+  const ref = state.calWeekStart || new Date();
+  const year=ref.getFullYear(), month=ref.getMonth();
+  const first=new Date(year,month,1), last=new Date(year,month+1,0);
+  const firstDow=(first.getDay()+6)%7; // 0=Mon
+  const loadByDay={};
+  for(const s of state.plan){
+    if(!isKey(s)) continue;
+    const km=s.actual?.km||s.km||0;
+    loadByDay[s.date]=(loadByDay[s.date]||0)+(km+(s.min||0)/5)*(LOAD_W[s.sport]||0.3);
+  }
+  const curW=state.calWeekStart, curWEnd=curW?ymd(addDays(curW,6)):null;
+  const hdrs='MTWTFSS'.split('').map(d=>`<span class="heat-dow">${d}</span>`).join('');
+  let cells='';
+  for(let i=0;i<firstDow;i++) cells+=`<div class="heat-day"></div>`;
+  for(let d=1;d<=last.getDate();d++){
+    const ds=ymd(new Date(year,month,d));
+    const lvl=Math.min(4,Math.floor((loadByDay[ds]||0)/3));
+    const cls=['heat-day', ds===TODAY?'today':'', (curW&&ds>=ymd(curW)&&ds<=curWEnd)?'cur-week':''].filter(Boolean).join(' ');
+    cells+=`<div class="${cls}" style="background:${HEAT[lvl]};" data-action="heat-jump" data-date="${ds}"></div>`;
+  }
+  return `<div class="heat-wrap">
+    <div class="heat-month-label">${first.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}</div>
+    <div class="heat-map">${hdrs}${cells}</div>
+  </div>`;
+}
+
 /* ---------- Section 9: Trends (placeholder until Garmin sync) ---------- */
 function renderTrends(){
   const mc = document.getElementById('main-content');
@@ -438,13 +478,15 @@ function renderTrends(){
       </div>`;
     return;
   }
-  const card = (id,title,sub)=>`<div class="trend-card"><div class="trend-title">${title}</div><div class="trend-sub">${sub}</div><div class="chart-wrap"><canvas id="c-${id}"></canvas></div><div class="trend-empty" id="n-${id}"></div></div>`;
+  const card = (id,title,sub,extra='')=>`<div class="trend-card"><div class="trend-title">${title}</div><div class="trend-sub">${sub}</div>${extra}<div class="chart-wrap"><canvas id="c-${id}"></canvas></div><div class="trend-empty" id="n-${id}"></div></div>`;
+  const mafLegend=`<div class="maf-legend"><span><span class="legend-swatch solid-green"></span>Actual</span><span><span class="legend-swatch dashed-blue"></span>Target 6:15 /km</span></div>`;
   mc.innerHTML = `<div class="page-header"><div class="page-title">Trends</div></div>
-    ${card('maf','MAF pace','Avg easy-run pace at HR ≤155 — lower is fitter')}
+    ${card('maf','MAF pace','Avg easy-run pace at HR ≤155 — lower is fitter',mafLegend)}
     ${card('vol','Weekly volume','Kilometres per sport')}
     ${card('rhr','Resting heart rate','Lower = better recovered')}
     ${card('hrv','HRV overnight','Higher &amp; stable = recovered')}
     ${card('vo2','VO₂max','Aerobic fitness estimate')}
+    ${card('rpe','Perceived effort','Easy / Good / Hard per session — high RPE on a Z2 day is a flag')}
     <div style="height:8px;"></div>`;
   destroyCharts();
   drawMaf(g);
@@ -452,6 +494,7 @@ function renderTrends(){
   drawWellness(g,'rhr','restingHr','#ef4444');
   drawWellness(g,'hrv','hrv','#16a34a');
   drawVo2(g);
+  drawRpe();
 }
 
 /* ---------- Section 10: Workouts (placeholder + Garmin feed) ---------- */
@@ -573,6 +616,16 @@ function openMetricTrend(key){
   });
 }
 
+function showRpeSheet(id){
+  openSheet('How did that feel?', `
+    <div class="rpe-row">
+      <button class="rpe-btn rpe-easy" data-action="set-rpe" data-id="${id}" data-rpe="easy">Easy</button>
+      <button class="rpe-btn rpe-good" data-action="set-rpe" data-id="${id}" data-rpe="good">Good</button>
+      <button class="rpe-btn rpe-hard" data-action="set-rpe" data-id="${id}" data-rpe="hard">Hard</button>
+    </div>
+    <button class="btn-danger-text" data-action="rpe-skip">Skip</button>
+  `);
+}
 function openEditSheet(id){
   const s = state.plan.find(x=>x.id===id); if(!s) return;
   const sportOpts = Object.keys(SPORTS).map(k=>`<option value="${k}" ${s.sport===k?'selected':''}>${SPORTS[k].label}</option>`).join('');
@@ -658,12 +711,16 @@ function destroyCharts(){ (state.charts||[]).forEach(c=>{ try{c.destroy();}catch
 function noData(id){ const c=document.getElementById('c-'+id); if(c)c.style.display='none'; const n=document.getElementById('n-'+id); if(n)n.textContent='Not enough data yet — keep syncing.'; }
 function axes(extraY){ return { x:{grid:{display:false},ticks:{color:'#9aa8a0',font:{size:11}}}, y: extraY || {grid:{color:'#eef2ef'},ticks:{color:'#9aa8a0',font:{size:11}}} }; }
 
+const MAF_TARGET = 375; // 6:15/km goal by race week
 function drawMaf(g){
   const pts=(g.maf||[]).filter(p=>p.pace); if(pts.length<1) return noData('maf');
   state.charts.push(new Chart(document.getElementById('c-maf'),{ type:'line',
-    data:{ labels:pts.map(p=>p.date.slice(5)), datasets:[{ data:pts.map(p=>p.pace), borderColor:'#16a34a', backgroundColor:'rgba(34,197,94,0.10)', fill:true, tension:0.3, borderWidth:2, pointRadius:3, pointBackgroundColor:'#16a34a' }] },
+    data:{ labels:pts.map(p=>p.date.slice(5)), datasets:[
+      { data:pts.map(p=>p.pace), borderColor:'#16a34a', backgroundColor:'rgba(34,197,94,0.10)', fill:true, tension:0.3, borderWidth:2, pointRadius:3, pointBackgroundColor:'#16a34a', label:'Actual' },
+      { data:pts.map(()=>MAF_TARGET), borderColor:'#0284c7', borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false, label:'Target' }
+    ]},
     options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>paceLabel(c.parsed.y)+' /km'}} },
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${paceLabel(c.parsed.y)} /km`}} },
       scales: axes({ reverse:true, grid:{color:'#eef2ef'}, ticks:{color:'#9aa8a0',font:{size:11}, callback:v=>paceLabel(v)} }) } }));
 }
 function drawWellness(g,id,key,color){
@@ -693,6 +750,28 @@ function drawWeeklyVol(g){
       scales:{ x:{stacked:true,grid:{display:false},ticks:{color:'#9aa8a0',font:{size:10}}}, y:{stacked:true,grid:{color:'#eef2ef'},ticks:{color:'#9aa8a0',font:{size:11}}} } } }));
 }
 
+function drawRpe(){
+  const rpeVal={easy:1,good:2,hard:3};
+  const SPORT_COLOR={run:'#22c55e',bike:'#0284c7',swim:'#06b6d4',strength:'#d97706',stairs:'#7c3aed'};
+  const done=state.plan.filter(s=>s.rpe&&s.status==='done'&&isKey(s)).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!done.length) return noData('rpe');
+  const canvas=document.getElementById('c-rpe'); if(!canvas) return;
+  state.charts.push(new Chart(canvas,{
+    type:'bar',
+    data:{
+      labels:done.map(s=>parseYMD(s.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+s.title.slice(0,4)),
+      datasets:[{data:done.map(s=>rpeVal[s.rpe]),backgroundColor:done.map(s=>SPORT_COLOR[s.sport]||'#9aa8a0'),borderRadius:4,barThickness:18}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#9aa8a0',font:{size:10},maxRotation:45}},
+        y:{min:0,max:3.5,grid:{color:'#eef2ef'},ticks:{color:'#9aa8a0',font:{size:11},
+           callback:v=>({1:'Easy',2:'Good',3:'Hard'})[v]||'',stepSize:1}}
+      }}
+  }));
+}
+
 function computeAcwr(g){
   if(!g?.activities) return null;
   const byDay={}; g.activities.forEach(a=>{ if(a.load) byDay[a.date]=(byDay[a.date]||0)+a.load; });
@@ -704,8 +783,8 @@ function computeAcwr(g){
 function acwrDot(v){ if(v==null) return ''; if(v>1.5) return 'dot-bad'; if(v>=0.8&&v<=1.3) return 'dot-good'; return 'dot-warn'; }
 function acwrText(v){ if(v==null) return 'sweet spot 0.8–1.3'; if(v>1.5) return 'high — ease off'; if(v<0.8) return 'building'; if(v<=1.3) return 'sweet spot'; return 'elevated'; }
 
-/* ---------- Section 15a: calendar drag-and-drop (long press) ---------- */
-let _drag = {}, _dragTimer = null;
+/* ---------- Section 15a: calendar drag-and-drop (long press) + swipe ---------- */
+let _drag = {}, _dragTimer = null, _swipe = {};
 
 function cancelDrag(){
   clearTimeout(_dragTimer); _dragTimer = null;
@@ -716,35 +795,84 @@ function cancelDrag(){
 }
 
 function handleTouchMove(e){
-  if(_drag.id && !_drag.active){
-    const t = e.touches[0];
-    if(Math.abs(t.clientX-_drag.sx)>8 || Math.abs(t.clientY-_drag.sy)>8) cancelDrag();
+  const t = e.touches[0];
+
+  // Active drag: move ghost
+  if(_drag.active){
+    e.preventDefault();
+    if(_drag.ghost){ _drag.ghost.style.left=(t.clientX-_drag.ox)+'px'; _drag.ghost.style.top=(t.clientY-_drag.oy)+'px'; }
+    document.querySelectorAll('.day-block').forEach(b=>b.classList.remove('drag-over'));
+    const hit = document.elementFromPoint(t.clientX,t.clientY)?.closest('.day-block[data-date]');
+    if(hit) hit.classList.add('drag-over');
     return;
   }
-  if(!_drag.active) return;
-  e.preventDefault();
-  const t = e.touches[0];
-  if(_drag.ghost){ _drag.ghost.style.left=(t.clientX-_drag.ox)+'px'; _drag.ghost.style.top=(t.clientY-_drag.oy)+'px'; }
-  document.querySelectorAll('.day-block').forEach(b=>b.classList.remove('drag-over'));
-  const hit = document.elementFromPoint(t.clientX,t.clientY)?.closest('.day-block[data-date]');
-  if(hit) hit.classList.add('drag-over');
+
+  // Active swipe: translate card
+  if(_swipe.locked){
+    e.preventDefault();
+    const dx = t.clientX - _swipe.sx;
+    _swipe.el.style.transform = `translateX(${dx}px)`;
+    const p = Math.min(1, Math.abs(dx)/120);
+    _swipe.el.style.background = dx>0 ? `rgba(22,163,74,${p*0.22})` : `rgba(217,119,6,${p*0.22})`;
+    return;
+  }
+
+  // Undecided: check direction
+  if(!_swipe.id && !_drag.id) return;
+  const sx = _swipe.sx ?? _drag.sx, sy = _swipe.sy ?? _drag.sy;
+  const dx = t.clientX-sx, dy = t.clientY-sy;
+
+  if(Math.abs(dx)>15 && Math.abs(dx)>Math.abs(dy)){
+    // Horizontal → swipe; cancel pending drag
+    clearTimeout(_dragTimer); _dragTimer=null; _drag={};
+    if(_swipe.id) _swipe.locked=true;
+  } else if(Math.abs(dy)>Math.abs(dx) && Math.abs(dy)>10){
+    // Vertical → scroll; cancel both
+    clearTimeout(_dragTimer); _dragTimer=null; _drag={}; _swipe={};
+  } else if((Math.abs(dx)>8||Math.abs(dy)>8) && _drag.id && !_drag.active){
+    // Moved before drag timer fired → cancel drag, keep swipe candidate
+    clearTimeout(_dragTimer); _dragTimer=null; _drag={};
+  }
 }
 
 function handleTouchEnd(e){
-  if(!_drag.active){ cancelDrag(); return; }
-  const t = (e.changedTouches||[])[0];
-  if(t){
-    const hit = document.elementFromPoint(t.clientX,t.clientY)?.closest('.day-block[data-date]');
-    if(hit){
-      const newDate = hit.dataset.date;
-      const sess = state.plan.find(s=>s.id===_drag.id);
-      if(sess && sess.date!==newDate){
-        updateSession(_drag.id,{date:newDate});
-        showToast('Moved to '+parseYMD(newDate).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}));
+  // Finish active drag
+  if(_drag.active){
+    const t=(e.changedTouches||[])[0];
+    if(t){
+      const hit=document.elementFromPoint(t.clientX,t.clientY)?.closest('.day-block[data-date]');
+      if(hit){
+        const newDate=hit.dataset.date;
+        const sess=state.plan.find(s=>s.id===_drag.id);
+        if(sess&&sess.date!==newDate){
+          updateSession(_drag.id,{date:newDate});
+          showToast('Moved to '+parseYMD(newDate).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}));
+        }
       }
     }
+    cancelDrag(); _swipe={}; return;
   }
   cancelDrag();
+
+  // Finish swipe
+  if(!_swipe.locked){ _swipe={}; return; }
+  const t=(e.changedTouches||[])[0];
+  if(!t){ _swipe={}; return; }
+  const dx=t.clientX-_swipe.sx;
+  const el=_swipe.el, id=_swipe.id;
+  _swipe={};
+
+  if(Math.abs(dx)>80){
+    el.style.transition='transform 0.2s ease,opacity 0.2s ease';
+    el.style.transform=`translateX(${dx>0?'200%':'-200%'})`;
+    el.style.opacity='0';
+    setTimeout(()=>setStatus(id, dx>0?'done':'skipped'), 180);
+  } else {
+    el.style.transition='transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94),background 0.2s';
+    el.style.transform='translateX(0)';
+    el.style.background='';
+    el.addEventListener('transitionend',()=>{ el.style.transition=''; el.style.transform=''; el.style.background=''; },{once:true});
+  }
 }
 
 /* ---------- Section 15: events ---------- */
@@ -769,6 +897,18 @@ function handleClick(e){
     return;
   }
   if (a==='metric-trend'){ openMetricTrend(t.dataset.metric); return; }
+  if (a==='set-rpe'){
+    const s = state.plan.find(x=>x.id===t.dataset.id);
+    if(s){ s.rpe = t.dataset.rpe; savePlan(state.plan); rerender(); }
+    closeSheet(); showToast('Logged'); return;
+  }
+  if (a==='rpe-skip'){ closeSheet(); return; }
+  if (a==='heat-jump'){
+    state.calWeekStart = mondayOf(parseYMD(t.dataset.date));
+    renderCalendar();
+    setTimeout(()=>document.querySelector('.day-block')?.scrollIntoView({behavior:'smooth'}), 60);
+    return;
+  }
 }
 function initEvents(){
   const mc = document.getElementById('main-content');
@@ -780,25 +920,28 @@ function initEvents(){
   document.getElementById('bottom-nav').addEventListener('click', e=>{
     const b=e.target.closest('[data-nav]'); if(b) navigate(b.dataset.nav);
   });
-  // Calendar long-press drag
+  // Swipe (everywhere) + long-press drag (calendar only)
   mc.addEventListener('touchstart', e=>{
-    if(state.view!=='calendar') return;
     const sess = e.target.closest('.sess[data-id]');
     if(!sess || e.target.closest('[data-action="tick"]')) return;
     const touch = e.touches[0];
-    _drag = { id:sess.dataset.id, el:sess, sx:touch.clientX, sy:touch.clientY, active:false };
-    _dragTimer = setTimeout(()=>{
-      if(!_drag.id) return;
-      _drag.active = true;
-      const rect = sess.getBoundingClientRect();
-      _drag.ox = touch.clientX-rect.left; _drag.oy = touch.clientY-rect.top;
-      const g = sess.cloneNode(true);
-      g.style.cssText = `position:fixed;width:${rect.width}px;left:${touch.clientX-_drag.ox}px;top:${touch.clientY-_drag.oy}px;z-index:999;opacity:0.92;pointer-events:none;box-shadow:0 10px 36px rgba(0,0,0,0.22);border-radius:12px;background:var(--surface);`;
-      document.body.appendChild(g);
-      _drag.ghost = g;
-      sess.style.opacity = '0.25';
-      if(navigator.vibrate) navigator.vibrate(40);
-    }, 500);
+    const id = sess.dataset.id;
+    _swipe = { id, el:sess, sx:touch.clientX, sy:touch.clientY, locked:false };
+    if(state.view==='calendar'){
+      _drag = { id, el:sess, sx:touch.clientX, sy:touch.clientY, active:false };
+      _dragTimer = setTimeout(()=>{
+        if(!_drag.id) return;
+        _drag.active = true; _swipe = {};
+        const rect = sess.getBoundingClientRect();
+        _drag.ox = touch.clientX-rect.left; _drag.oy = touch.clientY-rect.top;
+        const g = sess.cloneNode(true);
+        g.style.cssText = `position:fixed;width:${rect.width}px;left:${touch.clientX-_drag.ox}px;top:${touch.clientY-_drag.oy}px;z-index:999;opacity:0.92;pointer-events:none;box-shadow:0 10px 36px rgba(0,0,0,0.22);border-radius:12px;background:var(--surface);`;
+        document.body.appendChild(g);
+        _drag.ghost = g;
+        sess.style.opacity = '0.25';
+        if(navigator.vibrate) navigator.vibrate(40);
+      }, 500);
+    }
   }, {passive:true});
   document.addEventListener('touchmove', handleTouchMove, {passive:false});
   document.addEventListener('touchend', handleTouchEnd);
