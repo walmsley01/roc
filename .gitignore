@@ -1,0 +1,6 @@
+# Health data never goes in the (public) code repo — it lives in a secret gist
+garmin-data.json
+sync/gist_id.txt
+sync/sync.log
+__pycache__/
+.DS_Store
