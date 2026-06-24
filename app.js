@@ -291,7 +291,7 @@ function renderDashboard(){
     const keyListHTML = keys.map(s=>{
       const dow = parseYMD(s.date).toLocaleDateString('en-GB',{weekday:'short'});
       const dot = s.status==='done' ? `<span style="color:var(--accent);font-weight:700;">✓</span>`
-                : s.status==='skipped' ? `<span style="color:var(--amber);font-weight:700;">–</span>`
+                : s.status==='skipped' ? `<span style="color:var(--danger);font-weight:700;">–</span>`
                 : `<span style="color:var(--text-3);">·</span>`;
       return `<div class="key-sess-row" data-action="edit-session" data-id="${s.id}">
         <span class="key-dow">${dow}</span>
@@ -533,7 +533,7 @@ function workoutCard(a){
 }
 
 /* ---------- Section 11: Garmin apply (dormant until JSON exists) ---------- */
-const GARMIN_SPORT = { running:'run', trail_running:'run', cycling:'bike', road_biking:'bike', virtual_ride:'bike', lap_swimming:'swim', open_water_swimming:'swim' };
+const GARMIN_SPORT = { running:'run', trail_running:'run', cycling:'bike', road_biking:'bike', virtual_ride:'bike', lap_swimming:'swim', open_water_swimming:'swim', stair_climbing:'stairs', elliptical:'stairs', fitness_equipment:'stairs' };
 function autoTick(){
   const g = getGarmin(); if (!g?.activities) return;
   let changed = false;

@@ -135,7 +135,7 @@ html, body {
 .tick:active { transform: scale(0.85); }
 .tick.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .tick.auto { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 3px var(--accent-soft); }
-.tick.skip { border-color: var(--amber); color: var(--amber); }
+.tick.skip { border-color: var(--danger); color: var(--danger); }
 
 /* ── Dashboard widgets ── */
 .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
