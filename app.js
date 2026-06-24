@@ -418,7 +418,7 @@ function renderCalendar(){
 
   mc.innerHTML = `
     <div class="page-header" style="padding-bottom:6px;"><div class="page-title">Calendar</div></div>
-    ${renderHeatMap()}
+    ${renderMiniCal()}
     <div class="cal-head">
       <button class="cal-nav-btn" data-action="cal-prev"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div><div class="cal-week-label">${wk?`Week ${wk.n} · ${wk.phase}`:'Off-plan week'}</div><div class="cal-week-sub" style="text-align:center;">${range}</div></div>
@@ -435,32 +435,68 @@ function slotBlock(label, sessions, ds, slot){
       : `<div class="day-empty">—</div>`}`;
 }
 
-function renderHeatMap(){
-  const LOAD_W={run:1.0,bike:0.25,swim:2.0,stairs:0.6,strength:0.4};
-  const HEAT=['#eef2ef','#c0dd97','#97c459','#639922','#27500a'];
+function renderMiniCal(){
   const ref = state.calWeekStart || new Date();
   const year=ref.getFullYear(), month=ref.getMonth();
   const first=new Date(year,month,1), last=new Date(year,month+1,0);
-  const firstDow=(first.getDay()+6)%7; // 0=Mon
-  const loadByDay={};
+  const firstDow=(first.getDay()+6)%7;
+
+  // Build date → sessions map for this month
+  const byDay={};
   for(const s of state.plan){
-    if(!isKey(s)) continue;
-    const km=s.actual?.km||s.km||0;
-    loadByDay[s.date]=(loadByDay[s.date]||0)+(km+(s.min||0)/5)*(LOAD_W[s.sport]||0.3);
+    const d=parseYMD(s.date);
+    if(d.getFullYear()===year && d.getMonth()===month){
+      (byDay[s.date]=byDay[s.date]||[]).push(s);
+    }
   }
+
+  // Pick the single headline session to represent the day
+  function headline(sessions){
+    if(!sessions?.length) return null;
+    const PRIO={run:0,swim:1,stairs:2,bike:3,strength:4,mobility:9,rest:10};
+    const sorted=sessions.slice().sort((a,b)=>{
+      // commutes sink below key sessions of same sport
+      const ca=a.title==='Commute'?5:0, cb=b.title==='Commute'?5:0;
+      return (PRIO[a.sport]??6)+ca - ((PRIO[b.sport]??6)+cb);
+    });
+    return sorted[0];
+  }
+
+  function miniIcon(sport){
+    return `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${SPORTS[sport]?.icon||''}</svg>`;
+  }
+
   const curW=state.calWeekStart, curWEnd=curW?ymd(addDays(curW,6)):null;
-  const hdrs='MTWTFSS'.split('').map(d=>`<span class="heat-dow">${d}</span>`).join('');
+  const hdrs='MTWTFSS'.split('').map(d=>`<span class="mini-dow">${d}</span>`).join('');
   let cells='';
-  for(let i=0;i<firstDow;i++) cells+=`<div class="heat-day"></div>`;
+  for(let i=0;i<firstDow;i++) cells+=`<div class="mini-day mini-empty"></div>`;
+
   for(let d=1;d<=last.getDate();d++){
     const ds=ymd(new Date(year,month,d));
-    const lvl=Math.min(4,Math.floor((loadByDay[ds]||0)/3));
-    const cls=['heat-day', ds===TODAY?'today':'', (curW&&ds>=ymd(curW)&&ds<=curWEnd)?'cur-week':''].filter(Boolean).join(' ');
-    cells+=`<div class="${cls}" style="background:${HEAT[lvl]};" data-action="heat-jump" data-date="${ds}"></div>`;
+    const h=headline(byDay[ds]);
+    const isToday=ds===TODAY;
+    const isCurW=curW&&ds>=ymd(curW)&&ds<=curWEnd;
+    const done=h?.status==='done';
+    const past=ds<TODAY;
+    const restDay=!h||h.sport==='rest';
+
+    let cls='mini-day';
+    if(isToday) cls+=' mini-today';
+    else if(isCurW) cls+=' mini-curweek';
+    if(done) cls+=' mini-done';
+    else if(past&&!restDay) cls+=' mini-missed';
+    if(restDay) cls+=' mini-rest';
+
+    const icon=h&&h.sport!=='rest'&&h.sport!=='mobility' ? miniIcon(h.sport) : '';
+    cells+=`<div class="${cls}" data-action="heat-jump" data-date="${ds}">
+      <span class="mini-date">${d}</span>
+      ${icon}
+    </div>`;
   }
+
   return `<div class="heat-wrap">
     <div class="heat-month-label">${first.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}</div>
-    <div class="heat-map">${hdrs}${cells}</div>
+    <div class="mini-cal">${hdrs}${cells}</div>
   </div>`;
 }
 
