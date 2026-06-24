@@ -537,14 +537,17 @@ const GARMIN_SPORT = { running:'run', trail_running:'run', cycling:'bike', road_
 function autoTick(){
   const g = getGarmin(); if (!g?.activities) return;
   let changed = false;
+  // Reset all previously auto-matched sessions so we re-derive from scratch
+  for (const s of state.plan){
+    if (s.autoMatched){ s.status='planned'; s.autoMatched=false; s.actual=null; changed=true; }
+  }
   for (const a of g.activities){
     a.matched = false;
-    const cand = state.plan.filter(s =>
-      s.sport === a.sport && s.sport !== 'rest' && s.sport !== 'mobility' &&
-      s.status !== 'done' &&
-      Math.abs((parseYMD(s.date)-parseYMD(a.date))/86400000) <= 1
-    );
-    // best by distance closeness (fallback: any same-day same-sport)
+    const cand = state.plan.filter(s => {
+      if (s.sport !== a.sport || s.sport==='rest' || s.sport==='mobility' || s.status==='done') return false;
+      const dayDiff = Math.abs((parseYMD(s.date)-parseYMD(a.date))/86400000);
+      return dayDiff <= (s.title==='Commute' ? 0 : 1);
+    });
     let best = null, bestDiff = Infinity;
     for (const s of cand){
       const sk = s.km, ak = a.km;
