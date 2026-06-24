@@ -540,7 +540,8 @@ function autoTick(){
   for (const a of g.activities){
     a.matched = false;
     const cand = state.plan.filter(s =>
-      s.sport === a.sport && isKey(s) && s.status !== 'done' &&
+      s.sport === a.sport && s.sport !== 'rest' && s.sport !== 'mobility' &&
+      s.status !== 'done' &&
       Math.abs((parseYMD(s.date)-parseYMD(a.date))/86400000) <= 1
     );
     // best by distance closeness (fallback: any same-day same-sport)

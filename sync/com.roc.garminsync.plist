@@ -9,11 +9,10 @@
     <string>/bin/sh</string>
     <string>/Users/matthewwalmsley/roc/sync/run.sh</string>
   </array>
-  <key>StartCalendarInterval</key>
-  <dict>
-    <key>Hour</key><integer>5</integer>
-    <key>Minute</key><integer>30</integer>
-  </dict>
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <key>RunAtLoad</key>
+  <true/>
   <key>StandardOutPath</key>
   <string>/Users/matthewwalmsley/roc/sync/sync.log</string>
   <key>StandardErrorPath</key>
