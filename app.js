@@ -441,7 +441,6 @@ function renderMiniCal(){
   const first=new Date(year,month,1), last=new Date(year,month+1,0);
   const firstDow=(first.getDay()+6)%7;
 
-  // Build date → sessions map for this month
   const byDay={};
   for(const s of state.plan){
     const d=parseYMD(s.date);
@@ -450,20 +449,30 @@ function renderMiniCal(){
     }
   }
 
-  // Pick the single headline session to represent the day
-  function headline(sessions){
-    if(!sessions?.length) return null;
-    const PRIO={run:0,swim:1,stairs:2,bike:3,strength:4,mobility:9,rest:10};
-    const sorted=sessions.slice().sort((a,b)=>{
-      // commutes sink below key sessions of same sport
-      const ca=a.title==='Commute'?5:0, cb=b.title==='Commute'?5:0;
-      return (PRIO[a.sport]??6)+ca - ((PRIO[b.sport]??6)+cb);
-    });
-    return sorted[0];
+  // All distinct sport types for the day, priority-ordered, max 3
+  const SPORT_PRIO={run:0,swim:1,stairs:2,bike:3,strength:4};
+  function daySports(sessions){
+    if(!sessions?.length) return [];
+    const seen=new Set(), result=[];
+    sessions.filter(s=>s.sport!=='rest'&&s.sport!=='mobility')
+      .sort((a,b)=>(SPORT_PRIO[a.sport]??9)-(SPORT_PRIO[b.sport]??9))
+      .forEach(s=>{ if(!seen.has(s.sport)){seen.add(s.sport);result.push(s.sport);} });
+    return result.slice(0,3);
+  }
+
+  // Day status based on all trackable sessions
+  function dayStatus(sessions){
+    if(!sessions?.length) return 'rest';
+    const trackable=sessions.filter(s=>s.sport!=='rest'&&s.sport!=='mobility');
+    if(!trackable.length) return 'rest';
+    const done=trackable.filter(s=>s.status==='done').length;
+    if(done===trackable.length) return 'done';
+    if(done>0) return 'partial';
+    return 'planned';
   }
 
   function miniIcon(sport){
-    return `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${SPORTS[sport]?.icon||''}</svg>`;
+    return `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${SPORTS[sport]?.icon||''}</svg>`;
   }
 
   const curW=state.calWeekStart, curWEnd=curW?ymd(addDays(curW,6)):null;
@@ -473,24 +482,25 @@ function renderMiniCal(){
 
   for(let d=1;d<=last.getDate();d++){
     const ds=ymd(new Date(year,month,d));
-    const h=headline(byDay[ds]);
+    const sess=byDay[ds];
+    const sports=daySports(sess);
+    const status=dayStatus(sess);
     const isToday=ds===TODAY;
     const isCurW=curW&&ds>=ymd(curW)&&ds<=curWEnd;
-    const done=h?.status==='done';
-    const past=ds<TODAY;
-    const restDay=!h||h.sport==='rest';
+    const isPast=ds<TODAY;
 
     let cls='mini-day';
     if(isToday) cls+=' mini-today';
     else if(isCurW) cls+=' mini-curweek';
-    if(done) cls+=' mini-done';
-    else if(past&&!restDay) cls+=' mini-missed';
-    if(restDay) cls+=' mini-rest';
+    if(status==='done') cls+=' mini-done';
+    else if(status==='partial') cls+=' mini-partial';
+    else if(isPast&&status==='planned') cls+=' mini-missed';
+    if(status==='rest') cls+=' mini-rest';
 
-    const icon=h&&h.sport!=='rest'&&h.sport!=='mobility' ? miniIcon(h.sport) : '';
+    const icons=sports.map(miniIcon).join('');
     cells+=`<div class="${cls}" data-action="heat-jump" data-date="${ds}">
       <span class="mini-date">${d}</span>
-      ${icon}
+      ${icons?`<div class="mini-icons">${icons}</div>`:''}
     </div>`;
   }
 

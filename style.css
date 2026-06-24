@@ -381,7 +381,9 @@ html, body {
 .mini-done { background: rgba(22,163,74,0.10) !important; border-color: rgba(22,163,74,0.25) !important; }
 .mini-done .mini-date { color: var(--accent); }
 .mini-done svg { opacity: 1; color: var(--accent); }
+.mini-partial { background: rgba(22,163,74,0.05) !important; border-color: rgba(22,163,74,0.15) !important; }
 .mini-missed { background: rgba(239,68,68,0.06) !important; border-color: rgba(239,68,68,0.15) !important; }
+.mini-icons { display: flex; gap: 2px; align-items: center; justify-content: center; flex-wrap: wrap; }
 .mini-curweek { border-color: var(--text-3) !important; }
 .mini-today { border: 2px solid var(--accent) !important; }
 .mini-today .mini-date { color: var(--accent); font-size: 10px; }
