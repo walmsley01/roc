@@ -31,4 +31,20 @@ jobs:
       - name: Push to Gist
         env:
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
-        run: python sync/deploy.py --sync
+        run: |
+          python3 -c "
+          import json, urllib.request, os
+          content = open('garmin-data.json').read()
+          payload = json.dumps({'files': {'garmin-data.json': {'content': content}}}).encode()
+          req = urllib.request.Request(
+              'https://api.github.com/gists/5508c95d96946a81166c369ccfcc3cd1',
+              data=payload, method='PATCH',
+              headers={
+                  'Authorization': 'token ' + os.environ['GIST_TOKEN'],
+                  'Accept': 'application/vnd.github+json',
+                  'User-Agent': 'roc-sync'
+              }
+          )
+          urllib.request.urlopen(req)
+          print('Gist updated')
+          "
