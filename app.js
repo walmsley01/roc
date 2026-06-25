@@ -195,10 +195,10 @@ function getPlan(){
     return plan;
   }
 
-  // Fresh install — seed from scratch
+  // Fresh install — seed from scratch. Use epoch so any real user change wins on sync.
   const seed = buildSeed();
   store.set(KEYS.plan, seed);
-  store.set(KEYS.settings, { ...settings, seedVersion: SEED_VERSION, m1: true });
+  store.set(KEYS.settings, { ...settings, seedVersion: SEED_VERSION, m1: true, planUpdatedAt: '1970-01-01T00:00:00.000Z' });
   return seed;
 }
 function savePlan(p){
@@ -1068,19 +1068,22 @@ function handleClick(e){
     store.set(KEYS.gistToken, t);
     showToast('Connecting…');
     fetchPlanFromGist().then(remote => {
-      const localTime = (store.get(KEYS.settings) || {}).planUpdatedAt || '0';
-      if (remote?.plan && remote.updatedAt > localTime){
+      const localSettings = store.get(KEYS.settings) || {};
+      const localTime = localSettings.planUpdatedAt || '1970-01-01T00:00:00.000Z';
+      const localHasChanges = localTime > '1970-01-01T00:00:00.000Z';
+      if (remote?.plan && (!localHasChanges || remote.updatedAt > localTime)){
+        // Remote exists and is newer (or local is a fresh seed) — pull it
         state.plan = remote.plan;
         store.set(KEYS.plan, remote.plan);
-        const s = store.get(KEYS.settings) || {};
-        store.set(KEYS.settings, { ...s, planUpdatedAt: remote.updatedAt });
+        store.set(KEYS.settings, { ...localSettings, planUpdatedAt: remote.updatedAt });
         autoTick(); rerender();
         showToast('Synced from cloud');
+      } else if (localHasChanges) {
+        // Local has real user data and is newer — push to Gist
+        pushPlanToGist(state.plan, localTime).then(() => showToast('Sync connected'));
       } else {
-        const now = new Date().toISOString();
-        const s = store.get(KEYS.settings) || {};
-        store.set(KEYS.settings, { ...s, planUpdatedAt: now });
-        pushPlanToGist(state.plan, now).then(() => showToast('Sync connected'));
+        // Fresh seed, no remote — just connect, don't pollute the Gist
+        showToast('Sync connected');
       }
       closeSheet(); renderDashboard();
     });
