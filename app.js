@@ -7,6 +7,8 @@ const Z = 'Z2 145–155', REC = 'REC ≤145', HARD = 'HARD 165–175';
 const PLAN_START = '2026-06-22';   // Monday, Week 1
 const RACE_DATE  = '2026-09-05';
 const GARMIN_URL = 'https://gist.githubusercontent.com/walmsley01/5508c95d96946a81166c369ccfcc3cd1/raw/garmin-data.json';   // deploy.py injects the secret-gist raw URL here; empty = local file (dev)
+const GIST_ID    = '5508c95d96946a81166c369ccfcc3cd1';
+const PLAN_FILE  = 'plan-state.json';
 
 const SPORTS = {
   run:      { label: 'Run',      icon: '<path d="M13 4a2 2 0 1 0 0-.001M7 21l3-6 4-2 2 3 3 1M5 12l3-3 4 1 3-3"/>' },
@@ -135,7 +137,7 @@ const WEEKS = [
 ];
 
 /* ---------- Section 2: storage ---------- */
-const KEYS = { plan:'roc_plan', hip:'roc_hip', settings:'roc_settings', garmin:'roc_garmin' };
+const KEYS = { plan:'roc_plan', hip:'roc_hip', settings:'roc_settings', garmin:'roc_garmin', gistToken:'roc_gist_token' };
 const SEED_VERSION = 6;
 const store = {
   get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
@@ -199,7 +201,59 @@ function getPlan(){
   store.set(KEYS.settings, { ...settings, seedVersion: SEED_VERSION, m1: true });
   return seed;
 }
-function savePlan(p){ store.set(KEYS.plan, p); }
+function savePlan(p){
+  const now = new Date().toISOString();
+  const s = store.get(KEYS.settings) || {};
+  store.set(KEYS.plan, p);
+  store.set(KEYS.settings, { ...s, planUpdatedAt: now });
+  pushPlanToGist(p, now);
+}
+
+/* ---------- Gist plan sync ---------- */
+async function pushPlanToGist(plan, updatedAt){
+  const token = store.get(KEYS.gistToken);
+  if (!token) return;
+  try {
+    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { [PLAN_FILE]: { content: JSON.stringify({ plan, updatedAt }) } } })
+    });
+  } catch {}
+}
+
+async function fetchPlanFromGist(){
+  const token = store.get(KEYS.gistToken);
+  if (!token) return null;
+  try {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers: { 'Authorization': `token ${token}` },
+      cache: 'no-store'
+    });
+    if (!res.ok) return null;
+    const gist = await res.json();
+    const content = gist.files[PLAN_FILE]?.content;
+    if (!content) return null;
+    return JSON.parse(content);
+  } catch { return null; }
+}
+
+async function syncPlan(showStatus=false){
+  if (!store.get(KEYS.gistToken)) return;
+  const remote = await fetchPlanFromGist();
+  const localTime = (store.get(KEYS.settings) || {}).planUpdatedAt || '0';
+  if (remote?.plan && remote.updatedAt > localTime){
+    state.plan = remote.plan;
+    store.set(KEYS.plan, remote.plan);
+    const s = store.get(KEYS.settings) || {};
+    store.set(KEYS.settings, { ...s, planUpdatedAt: remote.updatedAt });
+    autoTick();
+    rerender();
+    if (showStatus) showToast('Plan synced');
+  } else {
+    pushPlanToGist(state.plan, localTime || new Date().toISOString());
+  }
+}
 function getHip(){ return store.get(KEYS.hip) || {}; }
 function saveHip(h){ store.set(KEYS.hip, h); }
 function getGarmin(){ return store.get(KEYS.garmin) || null; }
@@ -391,14 +445,21 @@ function renderDashboard(){
     return diff < 1 ? 'just now' : diff < 60 ? `${diff}m ago` : `${Math.round(diff/60)}h ago`;
   })() : null;
 
+  const hasToken = !!store.get(KEYS.gistToken);
   mc.innerHTML = `
     <div class="page-header">
       <div><div class="page-title">RO<span class="accent">C</span></div>
         <div class="page-sub">${daysToRace} days to race day</div></div>
-      <button class="sync-btn" data-action="sync-garmin">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-        ${syncedAt ? `<span>${syncedAt}</span>` : '<span>Sync</span>'}
-      </button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="icon-btn" data-action="open-sync-settings" title="Cross-device sync">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          ${hasToken ? '<span class="sync-dot"></span>' : ''}
+        </button>
+        <button class="sync-btn" data-action="sync-garmin">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          ${syncedAt ? `<span>${syncedAt}</span>` : '<span>Sync</span>'}
+        </button>
+      </div>
     </div>
 
     <div class="section-label">Today · ${parseYMD(TODAY).toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'short'})}</div>
@@ -705,6 +766,20 @@ function openMetricTrend(key){
   });
 }
 
+function openSyncSettings(){
+  const token = store.get(KEYS.gistToken);
+  openSheet('Cross-device sync', `
+    <p style="font-size:14px;color:var(--text-2);margin:0 0 16px;">Paste your GitHub token (gist scope) once on each device. Changes you make on your phone will appear on your laptop and vice versa.</p>
+    ${token ? `<div style="background:var(--accent-soft);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--accent);font-weight:600;">✓ Sync connected</div>` : ''}
+    <div class="form-group">
+      <label class="form-label">GitHub token</label>
+      <input id="sync-token-input" class="form-input" type="password" placeholder="ghp_..." value="${token||''}" autocomplete="off" style="font-family:monospace;font-size:13px;" />
+    </div>
+    <button class="btn-primary-full" data-action="save-gist-token">Save &amp; connect</button>
+    ${token ? `<button class="btn-danger-text" data-action="remove-gist-token" style="margin-top:8px;display:block;width:100%;text-align:center;">Disconnect</button>` : ''}
+  `);
+}
+
 function showRpeSheet(id){
   openSheet('How did that feel?', `
     <div class="rpe-row">
@@ -985,7 +1060,33 @@ function handleClick(e){
     if(tog) tog.textContent = open?'▴':'▾';
     return;
   }
-  if (a==='sync-garmin'){ loadGarmin(true); return; }
+  if (a==='sync-garmin'){ loadGarmin(true); syncPlan(); return; }
+  if (a==='open-sync-settings'){ openSyncSettings(); return; }
+  if (a==='save-gist-token'){
+    const t = document.getElementById('sync-token-input')?.value.trim();
+    if (!t){ showToast('Enter a token','error'); return; }
+    store.set(KEYS.gistToken, t);
+    showToast('Connecting…');
+    fetchPlanFromGist().then(remote => {
+      const localTime = (store.get(KEYS.settings) || {}).planUpdatedAt || '0';
+      if (remote?.plan && remote.updatedAt > localTime){
+        state.plan = remote.plan;
+        store.set(KEYS.plan, remote.plan);
+        const s = store.get(KEYS.settings) || {};
+        store.set(KEYS.settings, { ...s, planUpdatedAt: remote.updatedAt });
+        autoTick(); rerender();
+        showToast('Synced from cloud');
+      } else {
+        const now = new Date().toISOString();
+        const s = store.get(KEYS.settings) || {};
+        store.set(KEYS.settings, { ...s, planUpdatedAt: now });
+        pushPlanToGist(state.plan, now).then(() => showToast('Sync connected'));
+      }
+      closeSheet(); renderDashboard();
+    });
+    return;
+  }
+  if (a==='remove-gist-token'){ store.remove(KEYS.gistToken); closeSheet(); showToast('Sync disconnected'); renderDashboard(); return; }
   if (a==='metric-trend'){ openMetricTrend(t.dataset.metric); return; }
   if (a==='set-rpe'){
     const s = state.plan.find(x=>x.id===t.dataset.id);
@@ -1039,8 +1140,21 @@ function initEvents(){
 }
 
 /* ---------- Section 16: init ---------- */
-function init(){
+async function init(){
   state.plan = getPlan();
+
+  // Pull remote plan if token set and remote is newer
+  const remote = await fetchPlanFromGist();
+  if (remote?.plan && remote.updatedAt){
+    const localTime = (store.get(KEYS.settings) || {}).planUpdatedAt || '0';
+    if (remote.updatedAt > localTime){
+      state.plan = remote.plan;
+      store.set(KEYS.plan, remote.plan);
+      const s = store.get(KEYS.settings) || {};
+      store.set(KEYS.settings, { ...s, planUpdatedAt: remote.updatedAt });
+    }
+  }
+
   autoTick();
   initEvents();
   navigate('dashboard');

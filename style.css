@@ -319,6 +319,22 @@ html, body {
   text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; min-width: 28px;
 }
 
+/* ── Icon button (link/chain for plan sync) ── */
+.icon-btn {
+  position: relative;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 50%; width: 34px; height: 34px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-2);
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn:active { opacity: 0.6; }
+.sync-dot {
+  position: absolute; top: 3px; right: 3px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent); border: 1.5px solid var(--surface);
+}
+
 /* ── Sync button ── */
 .sync-btn {
   display: flex; align-items: center; gap: 5px;
