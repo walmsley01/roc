@@ -268,6 +268,30 @@ const state = {
 };
 
 /* ---------- Section 4: plan helpers ---------- */
+
+/* Sparkline SVG for wellness tiles */
+const SPARK_COLOR = { sleepScore:'#6366f1', hrv:'#16a34a', restingHr:'#ef4444', bodyBattery:'#f59e0b' };
+function weekVals(g, key){
+  const out = [];
+  for (let i=6; i>=0; i--){
+    const v = g?.wellness?.[ymd(addDays(new Date(),-i))]?.[key];
+    if (v!=null) out.push(v);
+  }
+  return out;
+}
+function sparkline(vals, color){
+  if (!vals||vals.length<2) return '';
+  const min=Math.min(...vals), max=Math.max(...vals), range=max-min||1;
+  const W=56, H=18;
+  const pts = vals.map((v,i)=>{
+    const x=(i/(vals.length-1))*W;
+    const y=H-((v-min)/range)*(H-3)-1;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const cy=(H-((vals.at(-1)-min)/range)*(H-3)-1).toFixed(1);
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block;overflow:visible"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/><circle cx="${W}" cy="${cy}" r="2.5" fill="${color}"/></svg>`;
+}
+
 const isKey = s => s.sport !== 'rest' && s.sport !== 'mobility' && s.title !== 'Commute';
 function stripeClass(s){
   if (s.hr?.includes('165')) return 'stripe-hard';
@@ -400,12 +424,15 @@ function renderDashboard(){
 
   // readiness tiles
   const today_w = g?.wellness?.[TODAY];
-  const tile = (label,val,sub,dot,mkey) => `
-    <div class="metric${mkey?' metric-tap':''}" ${mkey?`data-action="metric-trend" data-metric="${mkey}"`:''}>
+  const tile = (label,val,sub,dot,mkey) => {
+    const spark = mkey ? sparkline(weekVals(g,mkey), SPARK_COLOR[mkey]||'#16a34a') : '';
+    return `<div class="metric${mkey?' metric-tap':''}" ${mkey?`data-action="metric-trend" data-metric="${mkey}"`:''}>
       <div class="metric-label">${dot?`<span class="metric-dot ${dot}"></span>`:''}${label}</div>
       <div class="metric-val ${val==null?'muted':''}">${val==null?'—':val}</div>
+      ${spark?`<div class="metric-spark">${spark}</div>`:''}
       <div class="metric-sub">${sub}${mkey?` <span style="font-size:10px;color:var(--text-3);">↗</span>`:''}</div>
     </div>`;
+  };
   const readiness = `
     <div class="section-label">Readiness ${today_w?'':'· sync Garmin to populate'}</div>
     <div class="dash-grid">
@@ -471,8 +498,10 @@ function renderDashboard(){
     ${readiness}
     ${loadHTML}
 
-    <div class="section-label">Right hip today (0 = perfect · 10 = bad)</div>
-    <div class="card card-pad"><div class="hip-scale">${hipDots}</div></div>
+    <details class="hip-details" ${todayHip!=null?'open':''}>
+      <summary class="hip-summary">Hip pain log <span>${todayHip!=null?`· ${todayHip}/10 today`:'· tap to log'}</span></summary>
+      <div class="hip-scale" style="padding:8px 0 4px;">${hipDots}</div>
+    </details>
 
     ${upcoming ? `<div class="section-label" style="margin-top:18px;">Coming up</div>${upcoming}` : ''}
     <div style="height:8px;"></div>

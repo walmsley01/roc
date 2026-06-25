@@ -346,6 +346,15 @@ html, body {
 }
 .sync-btn:active { opacity: 0.6; }
 
+/* ── Sparkline inside metric tile ── */
+.metric-spark { margin: 5px 0 3px; line-height: 0; }
+
+/* ── Hip pain collapsible ── */
+.hip-details { padding: 2px 16px 6px; }
+.hip-summary { font-size: 12px; font-weight: 600; color: var(--text-2); cursor: pointer; list-style: none; padding: 10px 0 4px; user-select: none; }
+.hip-summary::-webkit-details-marker { display: none; }
+.hip-summary span { font-weight: 400; color: var(--text-3); }
+
 /* ── Metric tile tap ── */
 .metric-tap { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.12s; }
 .metric-tap:active { background: var(--surface-2); }
