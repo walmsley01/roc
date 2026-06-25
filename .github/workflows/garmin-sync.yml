@@ -18,10 +18,14 @@ jobs:
       - name: Install garminconnect
         run: pip install garminconnect --quiet
 
-      - name: Fetch from Garmin
+      - name: Restore Garmin tokens
         env:
-          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
-          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          GARMIN_TOKENS: ${{ secrets.GARMIN_TOKENS }}
+        run: |
+          mkdir -p ~/.garminconnect
+          echo "$GARMIN_TOKENS" | base64 -d > ~/.garminconnect/garmin_tokens.json
+
+      - name: Fetch from Garmin
         run: python sync/sync.py
 
       - name: Push to Gist
