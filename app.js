@@ -162,13 +162,41 @@ function buildSeed(){
   return out;
 }
 
+function runMigrations(plan, settings){
+  // Each migration runs once (guarded by settings.mN flag).
+  // Migrations mutate plan in-place and never wipe manual changes.
+  let changed = false;
+
+  // m1: remove strength sessions (previously done via SEED_VERSION bump — now targeted)
+  if (!settings.m1){
+    const before = plan.length;
+    plan = plan.filter(s => s.sport !== 'strength');
+    if (plan.length !== before) changed = true;
+    settings = { ...settings, m1: true };
+  }
+
+  return { plan, settings, changed };
+}
+
 function getPlan(){
   const saved = store.get(KEYS.plan);
   const settings = store.get(KEYS.settings) || {};
-  if (saved && settings.seedVersion === SEED_VERSION) return saved;
+
+  if (saved){
+    const { plan, settings: newSettings, changed } = runMigrations(saved, settings);
+    if (changed){
+      store.set(KEYS.plan, plan);
+      store.set(KEYS.settings, { ...newSettings, seedVersion: SEED_VERSION });
+    } else if (settings.seedVersion !== SEED_VERSION){
+      store.set(KEYS.settings, { ...settings, seedVersion: SEED_VERSION });
+    }
+    return plan;
+  }
+
+  // Fresh install — seed from scratch
   const seed = buildSeed();
   store.set(KEYS.plan, seed);
-  store.set(KEYS.settings, { ...settings, seedVersion: SEED_VERSION });
+  store.set(KEYS.settings, { ...settings, seedVersion: SEED_VERSION, m1: true });
   return seed;
 }
 function savePlan(p){ store.set(KEYS.plan, p); }
