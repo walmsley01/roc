@@ -319,6 +319,17 @@ html, body {
   text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; min-width: 28px;
 }
 
+/* ── Sync button ── */
+.sync-btn {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 600; color: var(--text-2);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 12px; font-family: inherit;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.sync-btn:active { opacity: 0.6; }
+
 /* ── Metric tile tap ── */
 .metric-tap { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.12s; }
 .metric-tap:active { background: var(--surface-2); }

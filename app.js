@@ -358,10 +358,19 @@ function renderDashboard(){
       <div class="card">${ss.map(s=>sessionRow(s)).join('')}</div>`;
   }
 
+  const syncedAt = g?.generatedAt ? (() => {
+    const diff = Math.round((Date.now()-new Date(g.generatedAt))/60000);
+    return diff < 1 ? 'just now' : diff < 60 ? `${diff}m ago` : `${Math.round(diff/60)}h ago`;
+  })() : null;
+
   mc.innerHTML = `
     <div class="page-header">
       <div><div class="page-title">RO<span class="accent">C</span></div>
         <div class="page-sub">${daysToRace} days to race day</div></div>
+      <button class="sync-btn" data-action="sync-garmin">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        ${syncedAt ? `<span>${syncedAt}</span>` : '<span>Sync</span>'}
+      </button>
     </div>
 
     <div class="section-label">Today · ${parseYMD(TODAY).toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'short'})}</div>
@@ -605,16 +614,18 @@ function autoTick(){
   }
   if (changed) savePlan(state.plan);
 }
-async function loadGarmin(){
+async function loadGarmin(showStatus=false){
+  if(showStatus) showToast('Syncing…');
   try{
     const res = await fetch(GARMIN_URL || 'garmin-data.json', { cache:'no-store' });
-    if (!res.ok) return;
+    if(!res.ok){ if(showStatus) showToast('Sync failed','error'); return; }
     const data = await res.json();
     (data.activities||[]).forEach(a => { a.sport = GARMIN_SPORT[a.type] || a.type; });
     store.set(KEYS.garmin, data);
     autoTick();
     rerender();
-  } catch { /* no file yet — fine */ }
+    if(showStatus) showToast('Garmin updated');
+  } catch { if(showStatus) showToast('No data yet','error'); }
 }
 
 /* ---------- Section 12: edit / add sheet ---------- */
@@ -946,6 +957,7 @@ function handleClick(e){
     if(tog) tog.textContent = open?'▴':'▾';
     return;
   }
+  if (a==='sync-garmin'){ loadGarmin(true); return; }
   if (a==='metric-trend'){ openMetricTrend(t.dataset.metric); return; }
   if (a==='set-rpe'){
     const s = state.plan.find(x=>x.id===t.dataset.id);
