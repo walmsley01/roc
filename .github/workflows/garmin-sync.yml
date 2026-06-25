@@ -25,6 +25,15 @@ jobs:
           mkdir -p ~/.garminconnect
           echo "$GARMIN_TOKENS" | base64 -d > ~/.garminconnect/garmin_tokens.json
 
+      - name: Debug token
+        run: |
+          echo "garminconnect version:"
+          pip show garminconnect | grep Version
+          echo "Token file:"
+          ls -la ~/.garminconnect/
+          echo "Token keys:"
+          python3 -c "import json; d=json.load(open('/root/.garminconnect/garmin_tokens.json')); print(list(d.keys()))"
+
       - name: Fetch from Garmin
         run: python sync/sync.py
 
