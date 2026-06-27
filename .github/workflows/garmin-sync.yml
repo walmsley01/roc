@@ -26,7 +26,7 @@ jobs:
           python3 -c "import base64,os; open(os.path.expanduser('~/.garminconnect/garmin_tokens.json'),'wb').write(base64.b64decode(os.environ['GARMIN_TOKENS']))"
 
       - name: Fetch from Garmin
-       env:
+        env:
           GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: python sync/sync.py
