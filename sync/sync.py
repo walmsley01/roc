@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
 ROC Garmin sync — fetches recent activities + wellness from Garmin Connect
-(reusing the saved login tokens at ~/.garminconnect) and writes a compact
-garmin-data.json that the ROC web app reads.
+and writes a compact garmin-data.json that the ROC web app reads.
 
 Run locally:    uv run --with garminconnect python sync/sync.py
 Re-auth if it fails:  uvx garmin-connect-mcp auth
+
+Auth priority: token file (~/.garminconnect) → GARMIN_EMAIL + GARMIN_PASSWORD env vars
 """
-import os, json, datetime, sys
+import os, json, datetime, sys, time
 
 TOKENSTORE   = os.path.expanduser("~/.garminconnect")
 HERE         = os.path.dirname(os.path.abspath(__file__))
@@ -27,7 +28,7 @@ def fmt_duration(seconds):
 def pace_per_km(distance_m, seconds):
     if not distance_m or not seconds or distance_m < 50:
         return None
-    return seconds / (distance_m / 1000.0)   # seconds per km
+    return seconds / (distance_m / 1000.0)
 
 
 def fmt_pace(sec_per_km):
@@ -47,23 +48,71 @@ def z2_pct(a):
     return round(zones[1] / total * 100)
 
 
+def retry(fn, attempts=3, delay=10):
+    for i in range(attempts):
+        try:
+            return fn()
+        except Exception as e:
+            if i == attempts - 1:
+                raise
+            print(f"  Retrying ({i+1}/{attempts-1}) after: {e}")
+            time.sleep(delay)
+
+
+def garmin_login(Garmin):
+    """Try token file first, fall back to email/password."""
+    token_file = os.path.join(TOKENSTORE, "garmin_tokens.json")
+    email    = os.environ.get("GARMIN_EMAIL")
+    password = os.environ.get("GARMIN_PASSWORD")
+
+    if os.path.exists(token_file):
+        try:
+            g = Garmin()
+            g.login(TOKENSTORE)
+            print("Logged in via saved tokens")
+            return g
+        except Exception as e:
+            print(f"Token auth failed ({e})")
+            if not (email and password):
+                sys.exit(
+                    "Token auth failed and GARMIN_EMAIL/GARMIN_PASSWORD not set.\n"
+                    "Add those as GitHub secrets, or re-run: uvx garmin-connect-mcp auth"
+                )
+            print("Falling back to email/password...")
+
+    if email and password:
+        try:
+            g = Garmin(email, password)
+            g.login()
+            print("Logged in via email/password")
+            return g
+        except Exception as e:
+            sys.exit(f"Email/password auth failed: {e}")
+
+    sys.exit(
+        "No Garmin credentials found.\n"
+        "Locally: uvx garmin-connect-mcp auth\n"
+        "In CI: set GARMIN_EMAIL + GARMIN_PASSWORD secrets"
+    )
+
+
 def main():
     try:
         from garminconnect import Garmin
     except ImportError:
         sys.exit("garminconnect not installed — run with: uv run --with garminconnect python sync/sync.py")
 
-    try:
-        g = Garmin()
-        g.login(TOKENSTORE)
-    except Exception as e:
-        sys.exit(f"Garmin login failed ({e}).\nRe-authenticate with: uvx garmin-connect-mcp auth")
+    g = garmin_login(Garmin)
 
     today = datetime.date.today()
     start = today - datetime.timedelta(days=ACT_DAYS)
 
     # ---- activities ----
-    raw = g.get_activities_by_date(start.isoformat(), today.isoformat()) or []
+    try:
+        raw = retry(lambda: g.get_activities_by_date(start.isoformat(), today.isoformat())) or []
+    except Exception as e:
+        sys.exit(f"Failed to fetch activities after retries: {e}")
+
     activities, maf, vo2 = [], [], {}
     for a in raw:
         dist_m = a.get("distance") or 0
@@ -86,10 +135,8 @@ def main():
             "load": round(a["activityTrainingLoad"]) if a.get("activityTrainingLoad") else None,
         }
         activities.append(act)
-        # MAF data point: easy runs (avg HR in aerobic band)
         if "run" in typ and avg_hr and 135 <= avg_hr <= 162 and sp:
             maf.append({"date": date, "pace": round(sp)})
-        # VO2max series (keep latest per day)
         if a.get("vO2MaxValue") and date:
             vo2[date] = round(a["vO2MaxValue"], 1)
 
@@ -103,13 +150,15 @@ def main():
         d = (today - datetime.timedelta(days=i)).isoformat()
         w = {}
         try:
-            st = g.get_stats(d) or {}
-            if st.get("restingHeartRate"):        w["restingHr"] = round(st["restingHeartRate"])
-            if st.get("bodyBatteryMostRecentValue") is not None: w["bodyBattery"] = st["bodyBatteryMostRecentValue"]
+            st = retry(lambda d=d: g.get_stats(d)) or {}
+            if st.get("restingHeartRate"):
+                w["restingHr"] = round(st["restingHeartRate"])
+            if st.get("bodyBatteryMostRecentValue") is not None:
+                w["bodyBattery"] = st["bodyBatteryMostRecentValue"]
         except Exception:
             pass
         try:
-            sl = (g.get_sleep_data(d) or {}).get("dailySleepDTO") or {}
+            sl = (retry(lambda d=d: g.get_sleep_data(d)) or {}).get("dailySleepDTO") or {}
             secs = sl.get("sleepTimeSeconds")
             if secs: w["sleepHours"] = round(secs / 3600.0, 1)
             score = ((sl.get("sleepScores") or {}).get("overall") or {}).get("value")
@@ -117,7 +166,7 @@ def main():
         except Exception:
             pass
         try:
-            hrv = (g.get_hrv_data(d) or {}).get("hrvSummary") or {}
+            hrv = (retry(lambda d=d: g.get_hrv_data(d)) or {}).get("hrvSummary") or {}
             if hrv.get("lastNightAvg"): w["hrv"] = hrv["lastNightAvg"]
             if hrv.get("status"):       w["hrvStatus"] = hrv["status"].lower()
         except Exception:
@@ -132,8 +181,13 @@ def main():
         "maf": maf,
         "vo2": vo2_series,
     }
-    with open(OUT_PATH, "w") as f:
+
+    # Write atomically — don't leave a partial file if something goes wrong
+    tmp = OUT_PATH + ".tmp"
+    with open(tmp, "w") as f:
         json.dump(out, f, indent=1)
+    os.replace(tmp, OUT_PATH)
+
     print(f"Wrote {OUT_PATH}: {len(activities)} activities, {len(wellness)} wellness days, {len(maf)} MAF points")
 
 
