@@ -704,7 +704,7 @@ function workoutCard(a){
       ${pill('Climb', a.elevation!=null?a.elevation+' m':null)}
     </div></div>`;
 }
-function openActivityDetail(id){
+function openActivityDetail(id, sessionId){
   const g = getGarmin();
   const a = g?.activities?.find(x => String(x.id) === String(id));
   if (!a) return;
@@ -740,6 +740,9 @@ function openActivityDetail(id){
   const matchedRow = a.matched
     ? `<div class="detail-matched">✓ Matched to plan</div>`
     : '';
+  const editLink = sessionId
+    ? `<div class="detail-edit-link"><button class="detail-edit-btn" data-action="edit-matched-session" data-id="${sessionId}">Edit planned session</button></div>`
+    : '';
   const html = `
     <div class="detail-grid">
       ${stat('Distance', a.km != null ? a.km + ' km' : null)}
@@ -753,7 +756,8 @@ function openActivityDetail(id){
     </div>
     ${zoneBar}
     ${teRow}
-    ${matchedRow}`;
+    ${matchedRow}
+    ${editLink}`;
   const dateStr = parseYMD(a.date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
   openSheet(`${a.title || SPORTS[a.sport]?.label || a.type}<div style="font-size:12px;font-weight:400;color:var(--text-2);margin-top:2px">${dateStr}</div>`, html);
 }
@@ -781,7 +785,7 @@ function autoTick(){
       if (sk && ak) { const r = Math.abs(sk-ak)/sk; if (r > 0.45) continue; diff = r; }
       if (diff < bestDiff){ bestDiff = diff; best = s; }
     }
-    if (best){ best.status='done'; best.autoMatched=true; best.actual={ label:a.km?`${a.km} km`:a.duration }; a.matched=true; changed=true; }
+    if (best){ best.status='done'; best.autoMatched=true; best.actual={ label:a.km?`${a.km} km`:a.duration, activityId:a.id }; a.matched=true; changed=true; }
   }
   if (changed) savePlan(state.plan);
 }
@@ -1126,7 +1130,12 @@ function handleClick(e){
   const t = e.target.closest('[data-action]'); if(!t) return;
   const a = t.dataset.action;
   if (a==='tick'){ e.stopPropagation(); setStatus(t.dataset.id, 'done'); return; }
-  if (a==='edit-session'){ openEditSheet(t.dataset.id); return; }
+  if (a==='edit-session'){
+    const s = state.plan.find(x=>x.id===t.dataset.id);
+    if (s?.autoMatched && s?.actual?.activityId) { openActivityDetail(s.actual.activityId, s.id); return; }
+    openEditSheet(t.dataset.id); return;
+  }
+  if (a==='edit-matched-session'){ closeSheet(); setTimeout(()=>openEditSheet(t.dataset.id), 300); return; }
   if (a==='delete-session'){ deleteSession(t.dataset.id); closeSheet(); showToast('Deleted'); return; }
   if (a==='add-session'){ addSession(t.dataset.date, t.dataset.slot); return; }
   if (a==='hip'){ const h=getHip(); const v=+t.dataset.val; h[TODAY] = h[TODAY]===v?undefined:v; saveHip(h); renderDashboard(); return; }

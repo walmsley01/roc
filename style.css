@@ -445,6 +445,8 @@ html, body {
 .te-row { display: flex; gap: 8px; margin-bottom: 16px; }
 .te-pill { border-radius: var(--r-full); padding: 5px 12px; background: var(--accent-soft); font-size: 13px; font-weight: 600; color: var(--accent); }
 .detail-matched { font-size: 13px; font-weight: 600; color: var(--accent); margin-top: 4px; }
+.detail-edit-link { margin-top: 20px; text-align: center; }
+.detail-edit-btn { background: none; border: 1px solid var(--border); border-radius: var(--r-full); padding: 8px 18px; font-size: 13px; color: var(--text-2); cursor: pointer; }
 
 .hidden { display: none !important; }
 .chart-wrap { position: relative; height: 220px; margin: 4px 0; }
