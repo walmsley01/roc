@@ -121,6 +121,7 @@ def main():
         sp     = pace_per_km(dist_m, dur_s)
         avg_hr = round(a.get("averageHR")) if a.get("averageHR") else None
         typ    = (a.get("activityType") or {}).get("typeKey", "")
+        zones = [a.get(f"hrTimeInZone_{i}") or 0 for i in range(1, 6)]
         act = {
             "id": a.get("activityId"),
             "type": typ,
@@ -133,6 +134,13 @@ def main():
             "elevation": round(a.get("elevationGain")) if a.get("elevationGain") else None,
             "z2pct": z2_pct(a),
             "load": round(a["activityTrainingLoad"]) if a.get("activityTrainingLoad") else None,
+            "hrZones": zones if sum(zones) > 0 else None,
+            "calories": round(a["calories"]) if a.get("calories") else None,
+            "aerobicTE": round(a["aerobicTrainingEffect"], 1) if a.get("aerobicTrainingEffect") else None,
+            "anaerobicTE": round(a["anaerobicTrainingEffect"], 1) if a.get("anaerobicTrainingEffect") else None,
+            "avgSpeed": round(a["averageSpeed"] * 3.6, 1) if a.get("averageSpeed") else None,
+            "cadence": (round(a.get("averageRunningCadenceInStepsPerMinute") or 0) or
+                        round(a.get("averageBikingCadenceInRevPerMinute") or 0) or None),
         }
         activities.append(act)
         if "run" in typ and avg_hr and 135 <= avg_hr <= 162 and sp:

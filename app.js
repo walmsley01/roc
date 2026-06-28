@@ -690,7 +690,7 @@ function renderWorkouts(){
 }
 function workoutCard(a){
   const pill = (l,v)=> v==null?'':`<span class="wk-pill">${l} <b>${v}</b></span>`;
-  return `<div class="wk-card">
+  return `<div class="wk-card" data-action="view-activity" data-id="${a.id}" style="cursor:pointer">
     <div class="wk-top"><div class="sess-icon ${a.sport}">${sportIcon(a.sport)}</div>
       <div class="wk-title">${a.title||SPORTS[a.sport]?.label}</div>
       ${a.matched?'<span class="wk-match">✓ matched</span>':''}
@@ -703,6 +703,59 @@ function workoutCard(a){
       ${pill('Z2', a.z2pct!=null?a.z2pct+'%':null)}
       ${pill('Climb', a.elevation!=null?a.elevation+' m':null)}
     </div></div>`;
+}
+function openActivityDetail(id){
+  const g = getGarmin();
+  const a = g?.activities?.find(x => String(x.id) === String(id));
+  if (!a) return;
+  const fmtSecs = s => { const h=Math.floor(s/3600), m=Math.floor((s%3600)/60); return h ? `${h}h ${String(m).padStart(2,'0')}m` : `${m}m`; };
+  const stat = (label, val) => val != null
+    ? `<div class="detail-stat"><div class="detail-label">${label}</div><div class="detail-val">${val}</div></div>`
+    : '';
+  const speedOrPace = a.sport === 'run'
+    ? stat('Pace', a.pace)
+    : stat('Speed', a.avgSpeed != null ? a.avgSpeed + ' km/h' : null);
+  const ZONE_COLORS = ['#93c5fd','#16a34a','#facc15','#f97316','#ef4444'];
+  const ZONE_NAMES  = ['Recovery','Aerobic','Tempo','Threshold','Max'];
+  let zoneBar = '';
+  if (a.hrZones && a.hrZones.some(z => z > 0)) {
+    const total = a.hrZones.reduce((s,z)=>s+z,0);
+    const segs = a.hrZones.map((z,i) => z > 0
+      ? `<div class="zone-seg" style="flex:${z};background:${ZONE_COLORS[i]}" title="${ZONE_NAMES[i]}: ${fmtSecs(z)}"></div>`
+      : '').join('');
+    const labels = a.hrZones.map((z,i) =>
+      `<div class="zone-lbl" style="color:${z>0?ZONE_COLORS[i]:'var(--text-3)'}">
+        <b>Z${i+1}</b><br>${z>0?fmtSecs(z):'—'}</div>`).join('');
+    zoneBar = `<div class="zone-bar-wrap">
+      <div class="detail-section-title">HR Zones</div>
+      <div class="zone-bar">${segs}</div>
+      <div class="zone-labels">${labels}</div>
+    </div>`;
+  }
+  let teRow = '';
+  if (a.aerobicTE != null) {
+    const anLabel = a.anaerobicTE != null ? `<span class="te-pill">Anaerobic ${a.anaerobicTE}</span>` : '';
+    teRow = `<div class="te-row"><span class="te-pill">Aerobic ${a.aerobicTE}</span>${anLabel}</div>`;
+  }
+  const matchedRow = a.matched
+    ? `<div class="detail-matched">✓ Matched to plan</div>`
+    : '';
+  const html = `
+    <div class="detail-grid">
+      ${stat('Distance', a.km != null ? a.km + ' km' : null)}
+      ${stat('Duration', a.duration)}
+      ${stat('Avg HR', a.avgHr ? a.avgHr + ' bpm' : null)}
+      ${speedOrPace}
+      ${stat('Elevation', a.elevation != null ? a.elevation + ' m' : null)}
+      ${stat('Load', a.load)}
+      ${stat('Calories', a.calories)}
+      ${stat('Cadence', a.cadence ? a.cadence + (a.sport==='run'?' spm':' rpm') : null)}
+    </div>
+    ${zoneBar}
+    ${teRow}
+    ${matchedRow}`;
+  const dateStr = parseYMD(a.date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  openSheet(`${a.title || SPORTS[a.sport]?.label || a.type}<div style="font-size:12px;font-weight:400;color:var(--text-2);margin-top:2px">${dateStr}</div>`, html);
 }
 
 /* ---------- Section 11: Garmin apply (dormant until JSON exists) ---------- */
@@ -1119,6 +1172,7 @@ function handleClick(e){
     return;
   }
   if (a==='remove-gist-token'){ store.remove(KEYS.gistToken); closeSheet(); showToast('Sync disconnected'); renderDashboard(); return; }
+  if (a==='view-activity'){ openActivityDetail(t.dataset.id); return; }
   if (a==='metric-trend'){ openMetricTrend(t.dataset.metric); return; }
   if (a==='set-rpe'){
     const s = state.plan.find(x=>x.id===t.dataset.id);
