@@ -143,7 +143,7 @@ def main():
                         round(a.get("averageBikingCadenceInRevPerMinute") or 0) or None),
         }
         activities.append(act)
-        if "run" in typ and avg_hr and 135 <= avg_hr <= 162 and sp:
+        if "run" in typ and avg_hr and 135 <= avg_hr <= 155 and sp:
             maf.append({"date": date, "pace": round(sp)})
         if a.get("vO2MaxValue") and date:
             vo2[date] = round(a["vO2MaxValue"], 1)
